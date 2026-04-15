@@ -3,9 +3,6 @@ name: location service ci
 on:
   push:
     branches: ["main"]
-    paths:
-      - "location/**"
-      - ".github/workflows/location-ci.yaml"
   pull_request:
     branches: ["main"]
     paths:

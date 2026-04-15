@@ -3,9 +3,6 @@ name: customer service ci
 on:
   push:
     branches: [ "main" ]
-    paths:
-      - "customer/**"
-      - ".github/workflows/customer-ci.yaml"
   pull_request:
     branches: [ "main" ]
     paths:

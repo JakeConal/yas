@@ -3,9 +3,6 @@ name: search service ci
 on:
   push:
     branches: ["main"]
-    paths:
-      - "search/**"
-      - ".github/workflows/search-ci.yaml"
   pull_request:
     branches: ["main"]
     paths:

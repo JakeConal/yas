@@ -3,9 +3,6 @@ name: recommendation service ci
 on:
   push:
     branches: ["main"]
-    paths:
-      - "recommendation/**"
-      - ".github/workflows/recommendation-ci.yaml"
   pull_request:
     branches: ["main"]
     paths:

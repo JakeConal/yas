@@ -3,9 +3,6 @@ name: webhook service ci
 on:
   push:
     branches: ["main"]
-    paths:
-      - "webhook/**"
-      - ".github/workflows/webhook-ci.yaml"
   pull_request:
     branches: ["main"]
     paths:

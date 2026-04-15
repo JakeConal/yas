@@ -3,9 +3,6 @@ name: backoffice-bff service ci
 on:
   push:
     branches: [ "main" ]
-    paths:
-      - "backoffice-bff/**"
-      - ".github/workflows/backoffice-bff-ci.yaml"
   pull_request:
     branches: [ "main" ]
     paths:

@@ -3,9 +3,6 @@ name: tax service ci
 on:
   push:
     branches: ["main"]
-    paths:
-      - "tax/**"
-      - ".github/workflows/tax-ci.yaml"
   pull_request:
     branches: ["main"]
     paths:

@@ -3,9 +3,6 @@ name: payment-paypal service ci
 on:
   push:
     branches: ["main"]
-    paths:
-      - "payment-paypal/**"
-      - ".github/workflows/payment-paypal-ci.yaml"
   pull_request:
     branches: ["main"]
     paths:
