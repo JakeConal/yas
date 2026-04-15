@@ -5,16 +5,12 @@ on:
     branches: [ "main" ]
     paths:
       - "product/**"
-      - ".github/workflows/actions/action.yaml"
       - ".github/workflows/product-ci.yaml"
-      - "pom.xml"
   pull_request:
     branches: [ "main" ]
     paths:
       - "product/**"
-      - ".github/workflows/actions/action.yaml"
       - ".github/workflows/product-ci.yaml"
-      - "pom.xml"
   workflow_dispatch:
 
 jobs:
