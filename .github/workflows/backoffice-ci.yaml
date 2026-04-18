@@ -41,6 +41,10 @@ jobs:
           scan-ref: './backoffice'
           format: 'sarif'
           output: 'trivy-results.sarif'
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: 'trivy-results.sarif'
       - name: Snyk Security Scan
         uses: snyk/actions/node@master
         continue-on-error: true
@@ -101,6 +105,7 @@ jobs:
           context: ./backoffice
           tags: ghcr.io/nashtech-garage/yas-backoffice:latest
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-results.sarif'
