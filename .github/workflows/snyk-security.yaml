@@ -1,0 +1,93 @@
+name: Snyk Security Scan
+
+on:
+  push:
+    paths:
+      - "**/pom.xml"
+      - "**/package.json"
+      - "**/package-lock.json"
+      - ".github/workflows/snyk-security.yaml"
+  pull_request:
+    paths:
+      - "**/pom.xml"
+      - "**/package.json"
+      - "**/package-lock.json"
+      - ".github/workflows/snyk-security.yaml"
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"   # Weekly on Monday at 6:00 AM UTC
+
+jobs:
+  snyk-java-services:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - product
+          - cart
+          - order
+          - media
+          - customer
+          - inventory
+          - location
+          - payment
+          - payment-paypal
+          - promotion
+          - rating
+          - search
+          - tax
+          - webhook
+          - recommendation
+          - sampledata
+          - backoffice-bff
+          - storefront-bff
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/workflows/actions
+
+      - name: Build project (compile only)
+        run: mvn compile -pl ${{ matrix.service }} -am -DskipTests
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/maven@master
+        continue-on-error: true   # Don't block the pipeline (advisory mode)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --all-projects
+          command: test
+
+      - name: Upload Snyk results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        continue-on-error: true
+        with:
+          sarif_file: snyk.sarif
+
+  snyk-node-services:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [storefront, backoffice]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ${{ matrix.service }}
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=${{ matrix.service }}/package.json
+          command: test
