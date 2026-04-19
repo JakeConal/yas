@@ -1,0 +1,108 @@
+name: Snyk Security Scan
+
+on:
+  push:
+    paths:
+      - "**/pom.xml"
+      - "**/package.json"
+      - "**/package-lock.json"
+      - ".github/workflows/snyk-security.yaml"
+  pull_request:
+    paths:
+      - "**/pom.xml"
+      - "**/package.json"
+      - "**/package-lock.json"
+      - ".github/workflows/snyk-security.yaml"
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  snyk-java-services:
+    name: Snyk Java - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - product
+          - cart
+          - order
+          - media
+          - customer
+          - inventory
+          - location
+          - payment
+          - payment-paypal
+          - promotion
+          - rating
+          - search
+          - tax
+          - webhook
+          - recommendation
+          - sampledata
+          - backoffice-bff
+          - storefront-bff
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/workflows/actions
+
+      - name: Build project (compile only)
+        run: mvn compile -pl ${{ matrix.service }} -am -DskipTests
+
+      - name: Run Snyk for Maven service
+        uses: snyk/actions/maven@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+          args: --file=${{ matrix.service }}/pom.xml --severity-threshold=high --sarif-file-output=snyk.sarif
+
+      - name: Upload Snyk SARIF
+        if: always() && hashFiles('snyk.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
+        with:
+          sarif_file: snyk.sarif
+          category: snyk-maven-${{ matrix.service }}
+
+  snyk-node-services:
+    name: Snyk Node - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [storefront, backoffice]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ${{ matrix.service }}
+
+      - name: Run Snyk for Node service
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+          args: --file=${{ matrix.service }}/package.json --severity-threshold=high --sarif-file-output=snyk.sarif
+
+      - name: Upload Snyk SARIF
+        if: always() && hashFiles('snyk.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
+        with:
+          sarif_file: snyk.sarif
+          category: snyk-node-${{ matrix.service }}
