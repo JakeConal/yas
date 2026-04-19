@@ -2,14 +2,12 @@ name: sampledata service ci
 
 on:
   push:
-    branches: ["main"]
     paths:
       - "sampledata/**"
       - ".github/workflows/actions/action.yaml"
       - ".github/workflows/sampledata-ci.yaml"
       - "pom.xml"
   pull_request:
-    branches: ["main"]
     paths:
       - "sampledata/**"
       - ".github/workflows/actions/action.yaml"
@@ -18,17 +16,55 @@ on:
   workflow_dispatch:
 
 jobs:
-  Build:
+  Test:
     runs-on: ubuntu-latest
     env:
       FROM_ORIGINAL_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0
       - uses: ./.github/workflows/actions
-      - name: Run Maven Build Command
-        run: mvn clean install -pl sampledata -am
+      - name: Run Maven Tests
+        run: mvn clean test -pl sampledata -am
+      - name: Upload Test Results
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: sampledata-Service-Unit-Test-Results
+          path: "sampledata/**/*-reports/TEST*.xml"
+          reporter: java-junit
+      - name: Generate Coverage Report
+        run: mvn jacoco:report -pl sampledata -am
+      - name: Upload Coverage to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sampledata-coverage-report
+          path: sampledata/target/site/jacoco/
+          if-no-files-found: warn
+      - name: Add Coverage Report to PR
+        uses: madrapps/jacoco-report@v1.6.1
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && github.event_name == 'pull_request' }}
+        with:
+          paths: ${{github.workspace}}/sampledata/target/site/jacoco/jacoco.xml
+          token: ${{secrets.GITHUB_TOKEN}}
+          min-coverage-overall: 80
+          min-coverage-changed-files: 60
+          title: 'sampledata Coverage Report'
+          update-comment: true
+
+  Build:
+    runs-on: ubuntu-latest
+    needs: Test
+    env:
+      FROM_ORIGINAL_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/workflows/actions
+      - name: Build Maven Package (skip tests)
+        run: mvn clean package -pl sampledata -am -DskipTests
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         run: mvn checkstyle:checkstyle -pl sampledata -am -Dcheckstyle.output.file=sampledata-checkstyle-result.xml
@@ -71,3 +107,4 @@ jobs:
           context: ./sampledata
           push: true
           tags: ghcr.io/nashtech-garage/yas-sampledata:latest
+

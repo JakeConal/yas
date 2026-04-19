@@ -2,14 +2,12 @@ name: backoffice-bff service ci
 
 on:
   push:
-    branches: [ "main" ]
     paths:
       - "backoffice-bff/**"
       - ".github/workflows/actions/action.yaml"
       - ".github/workflows/backoffice-bff-ci.yaml"
       - "pom.xml"
   pull_request:
-    branches: [ "main" ]
     paths:
       - "backoffice-bff/**"
       - ".github/workflows/actions/action.yaml"
@@ -18,25 +16,63 @@ on:
   workflow_dispatch:
 
 jobs:
-  Build:
+  Test:
     runs-on: ubuntu-latest
     env:
       FROM_ORIGINAL_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0
       - uses: ./.github/workflows/actions
+      - name: Run Maven Tests
+        run: mvn clean test -pl backoffice-bff -am
+      - name: Upload Test Results
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: backoffice-bff-Service-Unit-Test-Results
+          path: "backoffice-bff/**/*-reports/TEST*.xml"
+          reporter: java-junit
+      - name: Generate Coverage Report
+        run: mvn jacoco:report -pl backoffice-bff -am
+      - name: Upload Coverage to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backoffice-bff-coverage-report
+          path: backoffice-bff/target/site/jacoco/
+          if-no-files-found: warn
+      - name: Add Coverage Report to PR
+        uses: madrapps/jacoco-report@v1.6.1
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && github.event_name == 'pull_request' }}
+        with:
+          paths: ${{github.workspace}}/backoffice-bff/target/site/jacoco/jacoco.xml
+          token: ${{secrets.GITHUB_TOKEN}}
+          min-coverage-overall: 80
+          min-coverage-changed-files: 60
+          title: 'backoffice-bff Coverage Report'
+          update-comment: true
+
+  Build:
+    runs-on: ubuntu-latest
+    needs: Test
+    env:
+      FROM_ORIGINAL_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/workflows/actions
+      - name: Build Maven Package (skip tests)
+        run: mvn clean package -pl backoffice-bff -am -DskipTests
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        run: mvn checkstyle:checkstyle -f backoffice-bff -Dcheckstyle.output.file=backoffice-bff-checkstyle-result.xml
+        run: mvn checkstyle:checkstyle -pl backoffice-bff -am -Dcheckstyle.output.file=backoffice-bff-checkstyle-result.xml
       - name: Upload Checkstyle Result
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         uses: jwgmeligmeyling/checkstyle-github-action@master
         with:
           path: '**/backoffice-bff-checkstyle-result.xml'
-      - name: Run Maven Verify
-        run: mvn clean verify -f backoffice-bff
       - name: Analyze with sonar cloud
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         env:
@@ -71,3 +107,4 @@ jobs:
           context: ./backoffice-bff
           push: true
           tags: ghcr.io/nashtech-garage/yas-backoffice-bff:latest
+
