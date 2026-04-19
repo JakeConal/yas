@@ -65,7 +65,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/workflows/actions
       - name: Build Maven Package (skip tests)
-        run: mvn clean package -pl {{SERVICE_NAME}} -am -DskipTests
+        run: mvn clean install -pl {{SERVICE_NAME}} -am -DskipTests -Djacoco.skip=true
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         run: mvn checkstyle:checkstyle -pl {{SERVICE_NAME}} -am -Dcheckstyle.output.file={{SERVICE_NAME}}-checkstyle-result.xml
@@ -78,7 +78,7 @@ jobs:
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -f {{SERVICE_NAME}}
+        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -pl {{SERVICE_NAME}} -am
       - name: OWASP Dependency Check
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         uses: dependency-check/Dependency-Check_Action@main
