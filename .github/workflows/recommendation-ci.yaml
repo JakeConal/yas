@@ -26,7 +26,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/workflows/actions
       - name: Run Maven Tests
-        run: mvn clean test -pl recommendation -am
+        run: mvn clean install -pl recommendation -am
       - name: Upload Test Results
         uses: dorny/test-reporter@v1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
