@@ -38,7 +38,7 @@ jobs:
           reporter: java-junit
           fail-on-empty: false
       - name: Generate Coverage Report
-        run: mvn jacoco:report -pl webhook -am
+        run: mvn jacoco:report jacoco:check -pl webhook -am
       - name: Upload Coverage to Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -116,3 +116,4 @@ jobs:
           context: ./webhook
           push: true
           tags: ghcr.io/nashtech-garage/yas-webhook:latest
+
