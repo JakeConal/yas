@@ -36,7 +36,7 @@ jobs:
           reporter: java-junit
           fail-on-empty: false
       - name: Generate Coverage Report
-        run: mvn jacoco:report -pl {{SERVICE_NAME}} -am
+        run: mvn jacoco:report jacoco:check -pl {{SERVICE_NAME}}
       - name: Upload Coverage to Artifacts
         uses: actions/upload-artifact@v4
         with:

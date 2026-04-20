@@ -38,7 +38,7 @@ jobs:
           reporter: java-junit
           fail-on-empty: false
       - name: Generate Coverage Report
-        run: mvn jacoco:report jacoco:check -pl inventory -am
+        run: mvn jacoco:report jacoco:check -pl inventory
       - name: Upload Coverage to Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -116,4 +116,5 @@ jobs:
           context: ./inventory
           push: true
           tags: ghcr.io/nashtech-garage/yas-inventory:latest
+
 
