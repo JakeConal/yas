@@ -90,6 +90,7 @@ jobs:
           format: "HTML"
           args: >
             --disableCentral
+            --disableOssIndex
       - name: Upload OWASP Dependency Check results
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         uses: actions/upload-artifact@master
