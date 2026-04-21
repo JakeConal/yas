@@ -1,6 +1,7 @@
 package com.yas.media;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
@@ -9,6 +10,7 @@ import com.yas.media.repository.FileSystemRepository;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -33,6 +36,9 @@ class FileSystemRepositoryTest {
 
     @InjectMocks
     private FileSystemRepository fileSystemRepository;
+
+    @TempDir
+    Path tempDir;
 
     @BeforeEach
     public void setUp() {
@@ -105,6 +111,29 @@ class FileSystemRepositoryTest {
         when(filesystemConfig.getDirectory()).thenReturn(directoryPath);
 
         assertThrows(IllegalStateException.class, () -> fileSystemRepository.getFile(filePathStr));
+    }
+
+    @Test
+    void testPersistFile_whenDirectoryExists_thenWritesFile() throws IOException {
+        String filename = "test-file.png";
+        byte[] content = "test-content".getBytes(StandardCharsets.UTF_8);
+
+        when(filesystemConfig.getDirectory()).thenReturn(tempDir.toString());
+
+        String filePath = fileSystemRepository.persistFile(filename, content);
+
+        assertEquals(tempDir.resolve(filename).toString(), filePath);
+        assertArrayEquals(content, Files.readAllBytes(tempDir.resolve(filename)));
+    }
+
+    @Test
+    void testGetFile_whenFileIsDirectory_thenThrowsRuntimeException() {
+        when(filesystemConfig.getDirectory()).thenReturn(tempDir.toString());
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+            () -> fileSystemRepository.getFile(tempDir.toString()));
+
+        assertEquals("Failed to read file: " + tempDir, exception.getMessage());
     }
 
 }
