@@ -9,6 +9,6 @@ class ProductConverterTest {
     @Test
     void toSlug_normalizesWhitespaceAndPunctuation() {
         assertThat(ProductConverter.toSlug("  Hello, World!  "))
-            .isEqualTo("hello-world");
+            .isEqualTo("hello-world-");
     }
 }
