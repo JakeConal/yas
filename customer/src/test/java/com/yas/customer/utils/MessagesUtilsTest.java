@@ -7,15 +7,21 @@ import org.junit.jupiter.api.Test;
 class MessagesUtilsTest {
 
     @Test
-    void testGetMessageWithValidCode() {
+    void getMessage_whenCodeIsValid_thenFormatsMessage() {
         String result = MessagesUtils.getMessage("WRONG_EMAIL_FORMAT", "World");
+
         assertEquals("Wrong email format for World", result);
     }
 
     @Test
-    void testGetMessageWithInvalidCode() {
-
+    void getMessage_whenCodeIsInvalid_thenReturnsCode() {
         String result = MessagesUtils.getMessage("invalid.code");
+
         assertEquals("invalid.code", result);
+    }
+
+    @Test
+    void getMessage_whenKeyMissing_thenFormatsFallbackMessage() {
+        assertEquals("missing value", MessagesUtils.getMessage("missing {}", "value"));
     }
 }
