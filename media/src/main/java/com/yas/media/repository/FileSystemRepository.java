@@ -4,6 +4,7 @@ import com.yas.media.config.FilesystemConfig;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,13 +41,13 @@ public class FileSystemRepository {
             throw new IllegalStateException(String.format(DIRECTORY_DOES_NOT_EXIST, filesystemConfig.getDirectory()));
         }
         if (Files.isDirectory(path)) {
-            throw new RuntimeException("Failed to read file: " + filePath);
+            throw new IllegalStateException("Failed to read file: " + filePath);
         }
 
         try {
             return Files.newInputStream(path);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read file: " + filePath, e);
+            throw new UncheckedIOException("Failed to read file: " + filePath, e);
         }
     }
 

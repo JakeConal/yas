@@ -127,10 +127,10 @@ class FileSystemRepositoryTest {
     }
 
     @Test
-    void testGetFile_whenFileIsDirectory_thenThrowsRuntimeException() {
+    void testGetFile_whenFileIsDirectory_thenThrowsIllegalStateException() {
         when(filesystemConfig.getDirectory()).thenReturn(tempDir.toString());
 
-        RuntimeException exception = assertThrows(RuntimeException.class,
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
             () -> fileSystemRepository.getFile(tempDir.toString()));
 
         assertEquals("Failed to read file: " + tempDir, exception.getMessage());
