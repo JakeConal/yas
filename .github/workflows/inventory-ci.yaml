@@ -115,5 +115,3 @@ jobs:
           context: ./inventory
           push: true
           tags: ghcr.io/nashtech-garage/yas-inventory:latest
-
-

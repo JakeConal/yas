@@ -115,5 +115,3 @@ jobs:
           context: ./product
           push: true
           tags: ghcr.io/nashtech-garage/yas-product:latest
-
-

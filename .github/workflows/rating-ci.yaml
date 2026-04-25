@@ -115,5 +115,3 @@ jobs:
           context: ./rating
           push: true
           tags: ghcr.io/nashtech-garage/yas-rating:latest
-
-

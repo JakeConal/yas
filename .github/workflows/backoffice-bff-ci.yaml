@@ -115,5 +115,3 @@ jobs:
           context: ./backoffice-bff
           push: true
           tags: ghcr.io/nashtech-garage/yas-backoffice-bff:latest
-
-

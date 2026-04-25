@@ -115,5 +115,3 @@ jobs:
           context: ./webhook
           push: true
           tags: ghcr.io/nashtech-garage/yas-webhook:latest
-
-

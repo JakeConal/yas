@@ -115,5 +115,3 @@ jobs:
           context: ./recommendation
           push: true
           tags: ghcr.io/nashtech-garage/yas-recommendation:latest
-
-

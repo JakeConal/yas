@@ -115,5 +115,3 @@ jobs:
           context: ./payment
           push: true
           tags: ghcr.io/nashtech-garage/yas-payment:latest
-
-

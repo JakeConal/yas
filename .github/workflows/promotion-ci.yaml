@@ -115,5 +115,3 @@ jobs:
           context: ./promotion
           push: true
           tags: ghcr.io/nashtech-garage/yas-promotion:latest
-
-

@@ -115,5 +115,3 @@ jobs:
           context: ./payment-paypal
           push: true
           tags: ghcr.io/nashtech-garage/yas-payment-paypal:latest
-
-

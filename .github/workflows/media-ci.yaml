@@ -115,5 +115,3 @@ jobs:
           context: ./media
           push: true
           tags: ghcr.io/nashtech-garage/yas-media:latest
-
-

@@ -115,5 +115,3 @@ jobs:
           context: ./sampledata
           push: true
           tags: ghcr.io/nashtech-garage/yas-sampledata:latest
-
-
