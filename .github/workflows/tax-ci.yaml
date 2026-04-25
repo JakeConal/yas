@@ -75,7 +75,6 @@ jobs:
       - name: Build Maven Package (skip tests)
         run: |
           mvn install -pl tax -am -DskipTests -Djacoco.skip=true
-          mvn clean test -pl tax -am -DskipTests -Djacoco.skip=true
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         run: mvn checkstyle:checkstyle -pl tax -am -Dcheckstyle.output.file=tax-checkstyle-result.xml
