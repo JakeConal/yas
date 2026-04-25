@@ -21,6 +21,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -81,6 +82,20 @@ class PaymentServiceTest {
         verifyPaymentCreation(capturePaymentResponseVm);
         verifyOrderServiceInteractions(capturedPayment);
         verifyResult(capturedPayment, capturePaymentResponseVm);
+    }
+
+    @Test
+    void initPayment_unknownProvider_throwsIllegalArgumentException() {
+        InitPaymentRequestVm initPaymentRequestVm = InitPaymentRequestVm.builder()
+            .paymentMethod("UNKNOWN")
+            .totalPrice(BigDecimal.TEN)
+            .checkoutId("123")
+            .build();
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> paymentService.initPayment(initPaymentRequestVm));
+
+        assertEquals("No payment handler found for provider: UNKNOWN", exception.getMessage());
     }
 
     private CapturedPayment prepareCapturedPayment() {

@@ -3,10 +3,12 @@ package com.yas.webhook.service;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
+import com.yas.commonlibrary.exception.NotFoundException;
 import com.yas.webhook.model.Event;
 import com.yas.webhook.model.Webhook;
 import com.yas.webhook.model.WebhookEvent;
@@ -73,6 +75,23 @@ class ProductEventServiceTest {
         productEventService.onProductEvent(objectNode);
 
         verify(webhookEventNotificationRepository, times(0)).save(any(WebhookEventNotification.class));
+        verify(webhookService, times(0)).notifyToWebhook(any(WebhookEventNotificationDto.class));
+    }
+
+    @Test
+    void test_onProductEvent_shouldThrowWhenEventIsMissing() {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        ObjectNode objectNode = objectMapper.createObjectNode();
+        objectNode.put("op", "u");
+        objectNode.set("after", objectMapper.createObjectNode());
+
+        when(eventRepository.findByName(EventName.ON_PRODUCT_UPDATED)).thenReturn(Optional.empty());
+
+        org.junit.jupiter.api.Assertions.assertThrows(NotFoundException.class,
+            () -> productEventService.onProductEvent(objectNode));
+
+        verifyNoInteractions(webhookEventNotificationRepository);
         verify(webhookService, times(0)).notifyToWebhook(any(WebhookEventNotificationDto.class));
     }
 }
