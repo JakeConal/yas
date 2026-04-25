@@ -75,7 +75,6 @@ jobs:
       - name: Build Maven Package (skip tests)
         run: |
           mvn install -pl order -am -DskipTests -Djacoco.skip=true
-          mvn clean test -pl order -am -DskipTests -Djacoco.skip=true
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         run: mvn checkstyle:checkstyle -pl order -am -Dcheckstyle.output.file=order-checkstyle-result.xml
@@ -116,5 +115,3 @@ jobs:
           context: ./order
           push: true
           tags: ghcr.io/nashtech-garage/yas-order:latest
-
-

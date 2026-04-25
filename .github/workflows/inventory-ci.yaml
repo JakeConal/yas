@@ -75,7 +75,6 @@ jobs:
       - name: Build Maven Package (skip tests)
         run: |
           mvn install -pl inventory -am -DskipTests -Djacoco.skip=true
-          mvn clean test -pl inventory -am -DskipTests -Djacoco.skip=true
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         run: mvn checkstyle:checkstyle -pl inventory -am -Dcheckstyle.output.file=inventory-checkstyle-result.xml
@@ -116,5 +115,3 @@ jobs:
           context: ./inventory
           push: true
           tags: ghcr.io/nashtech-garage/yas-inventory:latest
-
-
