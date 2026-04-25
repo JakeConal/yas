@@ -75,7 +75,6 @@ jobs:
       - name: Build Maven Package (skip tests)
         run: |
           mvn install -pl webhook -am -DskipTests -Djacoco.skip=true
-          mvn clean test -pl webhook -am -DskipTests -Djacoco.skip=true
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         run: mvn checkstyle:checkstyle -pl webhook -am -Dcheckstyle.output.file=webhook-checkstyle-result.xml
