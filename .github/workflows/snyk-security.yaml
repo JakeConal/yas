@@ -22,31 +22,92 @@ permissions:
   security-events: write
 
 jobs:
+  detect-changed-services:
+    name: Detect changed services
+    runs-on: ubuntu-latest
+    outputs:
+      java-services: ${{ steps.changed-services.outputs.java-services }}
+      node-services: ${{ steps.changed-services.outputs.node-services }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed services
+        id: changed-services
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          all_java_services=(
+            product
+            cart
+            order
+            media
+            customer
+            inventory
+            location
+            payment
+            payment-paypal
+            promotion
+            rating
+            search
+            tax
+            webhook
+            recommendation
+            sampledata
+            delivery
+            backoffice-bff
+            storefront-bff
+          )
+          all_node_services=(storefront backoffice)
+
+          to_json() {
+            python3 -c 'import json, sys; print(json.dumps(sys.argv[1:]))' "$@"
+          }
+
+          java_services=()
+          node_services=()
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" || "$EVENT_NAME" == "schedule" ]]; then
+            java_services=("${all_java_services[@]}")
+            node_services=("${all_node_services[@]}")
+          else
+            changed_files="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+
+            if grep -qx ".github/workflows/snyk-security.yaml" <<< "$changed_files"; then
+              java_services=("${all_java_services[@]}")
+              node_services=("${all_node_services[@]}")
+            elif grep -Eq "^(pom.xml|common-library/pom.xml)$" <<< "$changed_files"; then
+              java_services=("${all_java_services[@]}")
+            else
+              for service in "${all_java_services[@]}"; do
+                if grep -Eq "^${service}/pom.xml$" <<< "$changed_files"; then
+                  java_services+=("$service")
+                fi
+              done
+
+              for service in "${all_node_services[@]}"; do
+                if grep -Eq "^${service}/(package.json|package-lock.json)$" <<< "$changed_files"; then
+                  node_services+=("$service")
+                fi
+              done
+            fi
+          fi
+
+          echo "java-services=$(to_json "${java_services[@]}")" >> "$GITHUB_OUTPUT"
+          echo "node-services=$(to_json "${node_services[@]}")" >> "$GITHUB_OUTPUT"
+
   snyk-java-services:
     name: Snyk Java - ${{ matrix.service }}
+    needs: detect-changed-services
+    if: ${{ needs.detect-changed-services.outputs.java-services != '[]' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        service:
-          - product
-          - cart
-          - order
-          - media
-          - customer
-          - inventory
-          - location
-          - payment
-          - payment-paypal
-          - promotion
-          - rating
-          - search
-          - tax
-          - webhook
-          - recommendation
-          - sampledata
-          - backoffice-bff
-          - storefront-bff
+        service: ${{ fromJSON(needs.detect-changed-services.outputs.java-services) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -74,11 +135,13 @@ jobs:
 
   snyk-node-services:
     name: Snyk Node - ${{ matrix.service }}
+    needs: detect-changed-services
+    if: ${{ needs.detect-changed-services.outputs.node-services != '[]' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        service: [storefront, backoffice]
+        service: ${{ fromJSON(needs.detect-changed-services.outputs.node-services) }}
     steps:
       - uses: actions/checkout@v4
 
