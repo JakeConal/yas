@@ -15,6 +15,12 @@ on:
       - "pom.xml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  packages: write
+
 jobs:
   Test:
     runs-on: ubuntu-latest
