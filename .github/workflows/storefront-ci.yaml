@@ -13,6 +13,10 @@ on:
       - ".github/workflows/storefront-ci.yaml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   Test:
     runs-on: ubuntu-latest
