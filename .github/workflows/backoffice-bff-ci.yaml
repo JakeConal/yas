@@ -1,5 +1,6 @@
 name: backoffice-bff service ci
 
+# Keep this workflow path-filtered so backoffice-bff changes report the required Test and Build checks.
 on:
   push:
     paths:
