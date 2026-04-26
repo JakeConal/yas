@@ -156,17 +156,31 @@ jobs:
       - name: Install Snyk CLI
         uses: snyk/actions/setup@master
 
+      - name: Prepare Maven wrapper for Snyk
+        working-directory: ${{ matrix.service }}
+        run: |
+          if [ -f "./mvnw" ]; then
+            chmod +x ./mvnw
+          else
+            cat <<'EOF' > ./mvnw
+            #!/usr/bin/env bash
+            exec mvn "$@"
+            EOF
+            chmod +x ./mvnw
+          fi
+
       - name: Run Snyk for Maven service
+        working-directory: ${{ matrix.service }}
         run: |
           set -e
           for attempt in 1 2 3; do
-            if snyk test --file=${{ matrix.service }}/pom.xml --severity-threshold=high --sarif-file-output=snyk.sarif; then
+            if snyk test --file=pom.xml --severity-threshold=high --sarif-file-output=snyk.sarif; then
               exit 0
             fi
 
             if [ "$attempt" -eq 3 ]; then
               echo "Snyk test failed after 3 attempts. Running debug mode for diagnostics..."
-              snyk test -d --file=${{ matrix.service }}/pom.xml --severity-threshold=high --sarif-file-output=snyk.sarif || true
+              snyk test -d --file=pom.xml --severity-threshold=high --sarif-file-output=snyk.sarif || true
               exit 1
             fi
 
