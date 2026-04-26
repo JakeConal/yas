@@ -12,6 +12,7 @@
     <version>1.0-SNAPSHOT</version>
     <name>backoffice-bff</name>
     <description>Backend for backoffice</description>
+    <!-- CI smoke-test marker for service-scoped workflows. -->
     <properties>
         <sonar.projectKey>jakeconal_yas-backoffice-bff</sonar.projectKey>
     </properties>
