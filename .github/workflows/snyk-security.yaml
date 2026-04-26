@@ -116,14 +116,16 @@ jobs:
       - name: Build project (compile only)
         run: mvn compile -pl ${{ matrix.service }} -am -DskipTests
 
+      - uses: snyk/actions/setup@master
+
       - name: Run Snyk for Maven service
-        uses: snyk/actions/maven@master
-        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: test
-          args: --file=${{ matrix.service }}/pom.xml --severity-threshold=high --sarif-file-output=snyk.sarif
+        run: |
+          snyk test \
+            --file=${{ matrix.service }}/pom.xml \
+            --severity-threshold=high \
+            --sarif-file-output=snyk.sarif
 
       - name: Upload Snyk SARIF
         if: always() && hashFiles('snyk.sarif') != ''
