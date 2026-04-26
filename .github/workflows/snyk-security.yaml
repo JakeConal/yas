@@ -118,14 +118,61 @@ jobs:
 
       - uses: ./.github/workflows/actions
 
+      - name: Configure Maven mirror
+        run: |
+          mkdir -p ~/.m2
+          cat <<'EOF' > ~/.m2/settings.xml
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+            <mirrors>
+              <mirror>
+                <id>central-mirror</id>
+                <name>Central Mirror</name>
+                <url>https://repo1.maven.org/maven2/</url>
+                <mirrorOf>*</mirrorOf>
+              </mirror>
+            </mirrors>
+          </settings>
+          EOF
+
       - name: Build project (compile only)
-        run: mvn compile -pl ${{ matrix.service }} -am -DskipTests
+        run: |
+          set -e
+          for attempt in 1 2 3; do
+            if mvn -U -ntp compile -pl ${{ matrix.service }} -am -DskipTests; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "Maven compile failed after 3 attempts."
+              exit 1
+            fi
+
+            echo "Maven compile attempt $attempt failed. Retrying..."
+            sleep 15
+          done
 
       - name: Install Snyk CLI
         uses: snyk/actions/setup@master
 
       - name: Run Snyk for Maven service
-        run: snyk test --file=${{ matrix.service }}/pom.xml --severity-threshold=high --sarif-file-output=snyk.sarif
+        run: |
+          set -e
+          for attempt in 1 2 3; do
+            if snyk test --file=${{ matrix.service }}/pom.xml --severity-threshold=high --sarif-file-output=snyk.sarif; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "Snyk test failed after 3 attempts. Running debug mode for diagnostics..."
+              snyk test -d --file=${{ matrix.service }}/pom.xml --severity-threshold=high --sarif-file-output=snyk.sarif || true
+              exit 1
+            fi
+
+            echo "Snyk test attempt $attempt failed. Retrying..."
+            sleep 15
+          done
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
