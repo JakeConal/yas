@@ -103,21 +103,14 @@ jobs:
           echo "node-services=$(to_json "${node_services[@]}")" >> "$GITHUB_OUTPUT"
 
   snyk-java-services:
-    name: Snyk Java - ${{ matrix.service }}
+    name: Snyk Java
     needs: detect-changed-services
     if: ${{ needs.detect-changed-services.outputs.java-services != '[]' }}
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        service: ${{ fromJSON(needs.detect-changed-services.outputs.java-services) }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: ./.github/workflows/actions
-
-      - name: Build project (compile only)
-        run: mvn compile -pl ${{ matrix.service }} -am -DskipTests
 
       - uses: snyk/actions/setup@master
 
@@ -135,7 +128,8 @@ jobs:
         run: |
           snyk test \
             --org="${SNYK_ORG}" \
-            --file=${{ matrix.service }}/pom.xml \
+            --file=pom.xml \
+            --maven-aggregate-project \
             --severity-threshold=high \
             --sarif-file-output=snyk.sarif
 
@@ -145,7 +139,7 @@ jobs:
         continue-on-error: true
         with:
           sarif_file: snyk.sarif
-          category: snyk-maven-${{ matrix.service }}
+          category: snyk-maven
 
   snyk-node-services:
     name: Snyk Node - ${{ matrix.service }}
