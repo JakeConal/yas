@@ -74,6 +74,11 @@ jobs:
             java_services=("${all_java_services[@]}")
             node_services=("${all_node_services[@]}")
           else
+            empty_tree_sha="$(git hash-object -t tree /dev/null)"
+            if [[ -z "$BASE_SHA" || "$BASE_SHA" == 0000000000000000000000000000000000000000 ]]; then
+              BASE_SHA="$empty_tree_sha"
+            fi
+
             changed_files="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
 
             if grep -qx ".github/workflows/snyk-security.yaml" <<< "$changed_files"; then
