@@ -118,11 +118,17 @@ jobs:
 
       - uses: snyk/actions/setup@master
 
+      - name: Debug Java and Maven
+        run: |
+          java -version
+          mvn -version
+          echo "JAVA_HOME=$JAVA_HOME"
+
       - name: Run Snyk for Maven service
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: |
-          snyk test \
+          snyk test -d \
             --file=${{ matrix.service }}/pom.xml \
             --severity-threshold=high \
             --sarif-file-output=snyk.sarif
