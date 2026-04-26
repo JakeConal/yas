@@ -122,11 +122,10 @@ jobs:
         run: mvn compile -pl ${{ matrix.service }} -am -DskipTests
 
       - name: Run Snyk for Maven service
-        uses: snyk/actions/maven@master
+        uses: snyk/actions/maven-3-jdk-24@master
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-          JAVA_HOME: /opt/jdk
         with:
           command: test
           args: --file=${{ matrix.service }}/pom.xml --severity-threshold=high --sarif-file-output=snyk.sarif
