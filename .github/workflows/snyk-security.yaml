@@ -99,8 +99,20 @@ jobs:
             fi
           fi
 
-          echo "java-services=$(to_json "${java_services[@]}")" >> "$GITHUB_OUTPUT"
-          echo "node-services=$(to_json "${node_services[@]}")" >> "$GITHUB_OUTPUT"
+          java_services_json="$(to_json "${java_services[@]}")"
+          node_services_json="$(to_json "${node_services[@]}")"
+
+          echo "Changed files:"
+          if [[ "$EVENT_NAME" == "workflow_dispatch" || "$EVENT_NAME" == "schedule" ]]; then
+            echo "(all services selected for ${EVENT_NAME})"
+          else
+            echo "$changed_files"
+          fi
+          echo "Detected Java services: ${java_services_json}"
+          echo "Detected Node services: ${node_services_json}"
+
+          echo "java-services=${java_services_json}" >> "$GITHUB_OUTPUT"
+          echo "node-services=${node_services_json}" >> "$GITHUB_OUTPUT"
 
   snyk-java-services:
     name: Snyk Java
