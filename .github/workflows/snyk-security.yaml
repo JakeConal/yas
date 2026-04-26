@@ -21,6 +21,9 @@ permissions:
   contents: read
   security-events: write
 
+env:
+  SNYK_ORG: ${{ vars.SNYK_ORG }}
+
 jobs:
   detect-changed-services:
     name: Detect changed services
@@ -118,17 +121,20 @@ jobs:
 
       - uses: snyk/actions/setup@master
 
-      - name: Debug Java and Maven
+      - name: Validate Snyk organization
         run: |
-          java -version
-          mvn -version
-          echo "JAVA_HOME=$JAVA_HOME"
+          if [ -z "$SNYK_ORG" ]; then
+            echo "GitHub Actions variable SNYK_ORG is required. Set it to the Snyk org slug or org ID accessible by SNYK_TOKEN."
+            exit 1
+          fi
 
       - name: Run Snyk for Maven service
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          SNYK_CFG_ORG: ${{ vars.SNYK_ORG }}
         run: |
-          snyk test -d \
+          snyk test \
+            --org="${SNYK_ORG}" \
             --file=${{ matrix.service }}/pom.xml \
             --severity-threshold=high \
             --sarif-file-output=snyk.sarif
@@ -161,14 +167,22 @@ jobs:
         run: npm ci
         working-directory: ${{ matrix.service }}
 
+      - name: Validate Snyk organization
+        run: |
+          if [ -z "$SNYK_ORG" ]; then
+            echo "GitHub Actions variable SNYK_ORG is required. Set it to the Snyk org slug or org ID accessible by SNYK_TOKEN."
+            exit 1
+          fi
+
       - name: Run Snyk for Node service
         uses: snyk/actions/node@master
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          SNYK_CFG_ORG: ${{ vars.SNYK_ORG }}
         with:
           command: test
-          args: --file=${{ matrix.service }}/package.json --severity-threshold=high --sarif-file-output=snyk.sarif
+          args: --org=${{ vars.SNYK_ORG }} --file=${{ matrix.service }}/package.json --severity-threshold=high --sarif-file-output=snyk.sarif
 
       - name: Upload Snyk SARIF
         if: always() && hashFiles('snyk.sarif') != ''
