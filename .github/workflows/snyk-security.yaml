@@ -145,13 +145,18 @@ jobs:
           mvn -N install -DskipTests -B -q
           mvn -pl common-library -am install -DskipTests -B -q
 
+      # Maven wrapper is checked in without executable bit; Snyk auto-detects
+      # `./mvnw` in the service dir and fails with EACCES otherwise.
+      - name: Make Maven wrapper executable
+        run: chmod +x ${{ matrix.service }}/mvnw
+
       - name: Run Snyk for ${{ matrix.service }}
         working-directory: ${{ matrix.service }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
           SNYK_CFG_ORG: ${{ vars.SNYK_ORG }}
         run: |
-          snyk test -d \
+          snyk test \
             --org="${SNYK_ORG}" \
             --severity-threshold=high \
             --sarif-file-output=../snyk.sarif
