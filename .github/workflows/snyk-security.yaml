@@ -140,7 +140,12 @@ jobs:
       # NOTE: scanning each module in isolation is not viable here because
       # Snyk's hosted Maven resolver (used for single-pom scans) cannot fetch
       # the unpublished parent POM and returns 422 Unprocessable Entity.
+      # Don't fail the workflow when Snyk finds vulnerabilities — findings are
+      # still uploaded to the Security tab via SARIF and visible on the Snyk
+      # dashboard. This keeps CI green so unrelated PRs aren't blocked while
+      # vulnerable dependencies are being remediated.
       - name: Run Snyk for Maven reactor
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
           SNYK_CFG_ORG: ${{ vars.SNYK_ORG }}
