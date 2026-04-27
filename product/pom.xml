@@ -12,6 +12,7 @@
     <version>${revision}</version>
     <name>product</name>
     <description>YAS Product service</description>
+    <!-- CI smoke-test marker for Java service workflows. -->
 
     <properties>
         <sonar.organization>jakeconal</sonar.organization>

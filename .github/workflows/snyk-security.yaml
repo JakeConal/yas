@@ -1,5 +1,5 @@
 name: Snyk Security Scan
-
+# 
 on:
   push:
     paths:
@@ -20,6 +20,9 @@ on:
 permissions:
   contents: read
   security-events: write
+
+env:
+  SNYK_ORG: ${{ vars.SNYK_ORG }}
 
 jobs:
   detect-changed-services:
@@ -96,42 +99,100 @@ jobs:
             fi
           fi
 
-          echo "java-services=$(to_json "${java_services[@]}")" >> "$GITHUB_OUTPUT"
-          echo "node-services=$(to_json "${node_services[@]}")" >> "$GITHUB_OUTPUT"
+          java_services_json="$(to_json "${java_services[@]}")"
+          node_services_json="$(to_json "${node_services[@]}")"
+
+          echo "Changed files:"
+          if [[ "$EVENT_NAME" == "workflow_dispatch" || "$EVENT_NAME" == "schedule" ]]; then
+            echo "(all services selected for ${EVENT_NAME})"
+          else
+            echo "$changed_files"
+          fi
+          echo "Detected Java services: ${java_services_json}"
+          echo "Detected Node services: ${node_services_json}"
+
+          echo "java-services=${java_services_json}" >> "$GITHUB_OUTPUT"
+          echo "node-services=${node_services_json}" >> "$GITHUB_OUTPUT"
 
   snyk-java-services:
-    name: Snyk Java - ${{ matrix.service }}
+    name: Snyk Java
     needs: detect-changed-services
     if: ${{ needs.detect-changed-services.outputs.java-services != '[]' }}
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        service: ${{ fromJSON(needs.detect-changed-services.outputs.java-services) }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: ./.github/workflows/actions
 
-      - name: Build project (compile only)
-        run: mvn compile -pl ${{ matrix.service }} -am -DskipTests
+      - uses: snyk/actions/setup@master
 
-      - name: Run Snyk for Maven service
-        uses: snyk/actions/maven@master
+      - name: Validate Snyk organization
+        run: |
+          if [ -z "$SNYK_ORG" ]; then
+            echo "GitHub Actions variable SNYK_ORG is required. Set it to the Snyk org slug or org ID accessible by SNYK_TOKEN."
+            exit 1
+          fi
+
+      # Aggregate scan from the reactor root: Snyk runs `mvn dependency:tree`
+      # locally on the whole multi-module project, so it can resolve the
+      # internal parent POM (`com.yas:yas`) and `common-library`. Per-module
+      # results are still reported separately on the Snyk dashboard.
+      # NOTE: scanning each module in isolation is not viable here because
+      # Snyk's hosted Maven resolver (used for single-pom scans) cannot fetch
+      # the unpublished parent POM and returns 422 Unprocessable Entity.
+      # Don't fail the workflow when Snyk finds vulnerabilities — findings are
+      # still uploaded to the Security tab via SARIF and visible on the Snyk
+      # dashboard. This keeps CI green so unrelated PRs aren't blocked while
+      # vulnerable dependencies are being remediated.
+      - name: Run Snyk for Maven reactor
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: test
-          args: --file=${{ matrix.service }}/pom.xml --severity-threshold=high --sarif-file-output=snyk.sarif
+          SNYK_CFG_ORG: ${{ vars.SNYK_ORG }}
+        run: |
+          snyk test \
+            --org="${SNYK_ORG}" \
+            --file=pom.xml \
+            --maven-aggregate-project \
+            --severity-threshold=high \
+            --sarif-file-output=snyk.sarif
 
-      - name: Upload Snyk SARIF
+      # GitHub Code Scanning rejects SARIF files with more than 20 runs
+      # (one run per Maven module). The reactor has 21 modules, so split
+      # the SARIF into chunks of <= 20 runs and upload each as a separate
+      # category.
+      - name: Split Snyk SARIF into chunks
         if: always() && hashFiles('snyk.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        run: |
+          mkdir -p sarif-chunks
+          total=$(jq '.runs | length' snyk.sarif)
+          chunk_size=20
+          i=1
+          offset=0
+          while [ "$offset" -lt "$total" ]; do
+            end=$((offset + chunk_size))
+            jq ".runs |= .[${offset}:${end}]" snyk.sarif \
+              > "sarif-chunks/snyk-${i}.sarif"
+            i=$((i + 1))
+            offset=$end
+          done
+          ls -la sarif-chunks
+
+      - name: Upload Snyk SARIF chunk 1
+        if: always() && hashFiles('sarif-chunks/snyk-1.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
         continue-on-error: true
         with:
-          sarif_file: snyk.sarif
-          category: snyk-maven-${{ matrix.service }}
+          sarif_file: sarif-chunks/snyk-1.sarif
+          category: snyk-maven-1
+
+      - name: Upload Snyk SARIF chunk 2
+        if: always() && hashFiles('sarif-chunks/snyk-2.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        continue-on-error: true
+        with:
+          sarif_file: sarif-chunks/snyk-2.sarif
+          category: snyk-maven-2
 
   snyk-node-services:
     name: Snyk Node - ${{ matrix.service }}
@@ -153,18 +214,26 @@ jobs:
         run: npm ci
         working-directory: ${{ matrix.service }}
 
+      - name: Validate Snyk organization
+        run: |
+          if [ -z "$SNYK_ORG" ]; then
+            echo "GitHub Actions variable SNYK_ORG is required. Set it to the Snyk org slug or org ID accessible by SNYK_TOKEN."
+            exit 1
+          fi
+
       - name: Run Snyk for Node service
         uses: snyk/actions/node@master
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          SNYK_CFG_ORG: ${{ vars.SNYK_ORG }}
         with:
           command: test
-          args: --file=${{ matrix.service }}/package.json --severity-threshold=high --sarif-file-output=snyk.sarif
+          args: --org=${{ vars.SNYK_ORG }} --file=${{ matrix.service }}/package.json --severity-threshold=high --sarif-file-output=snyk.sarif
 
       - name: Upload Snyk SARIF
         if: always() && hashFiles('snyk.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         continue-on-error: true
         with:
           sarif_file: snyk.sarif
