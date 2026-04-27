@@ -161,6 +161,7 @@ jobs:
         run: |
           snyk test \
             --org="${SNYK_ORG}" \
+            --maven-aggregate-project \
             --severity-threshold=high \
             --sarif-file-output=../snyk.sarif
 
