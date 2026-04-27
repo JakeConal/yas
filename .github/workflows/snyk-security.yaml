@@ -157,13 +157,42 @@ jobs:
             --severity-threshold=high \
             --sarif-file-output=snyk.sarif
 
-      - name: Upload Snyk SARIF
+      # GitHub Code Scanning rejects SARIF files with more than 20 runs
+      # (one run per Maven module). The reactor has 21 modules, so split
+      # the SARIF into chunks of <= 20 runs and upload each as a separate
+      # category.
+      - name: Split Snyk SARIF into chunks
         if: always() && hashFiles('snyk.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        run: |
+          mkdir -p sarif-chunks
+          total=$(jq '.runs | length' snyk.sarif)
+          chunk_size=20
+          i=1
+          offset=0
+          while [ "$offset" -lt "$total" ]; do
+            end=$((offset + chunk_size))
+            jq ".runs |= .[${offset}:${end}]" snyk.sarif \
+              > "sarif-chunks/snyk-${i}.sarif"
+            i=$((i + 1))
+            offset=$end
+          done
+          ls -la sarif-chunks
+
+      - name: Upload Snyk SARIF chunk 1
+        if: always() && hashFiles('sarif-chunks/snyk-1.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
         continue-on-error: true
         with:
-          sarif_file: snyk.sarif
-          category: snyk-maven
+          sarif_file: sarif-chunks/snyk-1.sarif
+          category: snyk-maven-1
+
+      - name: Upload Snyk SARIF chunk 2
+        if: always() && hashFiles('sarif-chunks/snyk-2.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        continue-on-error: true
+        with:
+          sarif_file: sarif-chunks/snyk-2.sarif
+          category: snyk-maven-2
 
   snyk-node-services:
     name: Snyk Node - ${{ matrix.service }}
@@ -204,7 +233,7 @@ jobs:
 
       - name: Upload Snyk SARIF
         if: always() && hashFiles('snyk.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         continue-on-error: true
         with:
           sarif_file: snyk.sarif
