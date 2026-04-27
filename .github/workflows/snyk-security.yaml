@@ -115,10 +115,14 @@ jobs:
           echo "node-services=${node_services_json}" >> "$GITHUB_OUTPUT"
 
   snyk-java-services:
-    name: Snyk Java
+    name: Snyk Java - ${{ matrix.service }}
     needs: detect-changed-services
     if: ${{ needs.detect-changed-services.outputs.java-services != '[]' }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.detect-changed-services.outputs.java-services) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -133,15 +137,22 @@ jobs:
             exit 1
           fi
 
-      - name: Run Snyk for Maven service
+      # Submodules depend on the parent POM (com.yas:yas) and common-library,
+      # neither of which is published to a remote repository. Install them into
+      # the local Maven repo first so `snyk test` can resolve dependencies.
+      - name: Install parent POM and common-library
+        run: |
+          mvn -N install -DskipTests -B -q
+          mvn -pl common-library -am install -DskipTests -B -q
+
+      - name: Run Snyk for ${{ matrix.service }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
           SNYK_CFG_ORG: ${{ vars.SNYK_ORG }}
         run: |
           snyk test \
             --org="${SNYK_ORG}" \
-            --file=pom.xml \
-            --maven-aggregate-project \
+            --file=${{ matrix.service }}/pom.xml \
             --severity-threshold=high \
             --sarif-file-output=snyk.sarif
 
@@ -151,7 +162,7 @@ jobs:
         continue-on-error: true
         with:
           sarif_file: snyk.sarif
-          category: snyk-maven
+          category: snyk-maven-${{ matrix.service }}
 
   snyk-node-services:
     name: Snyk Node - ${{ matrix.service }}
