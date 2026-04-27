@@ -146,15 +146,15 @@ jobs:
           mvn -pl common-library -am install -DskipTests -B -q
 
       - name: Run Snyk for ${{ matrix.service }}
+        working-directory: ${{ matrix.service }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
           SNYK_CFG_ORG: ${{ vars.SNYK_ORG }}
         run: |
-          snyk test \
+          snyk test -d \
             --org="${SNYK_ORG}" \
-            --file=${{ matrix.service }}/pom.xml \
             --severity-threshold=high \
-            --sarif-file-output=snyk.sarif
+            --sarif-file-output=../snyk.sarif
 
       - name: Upload Snyk SARIF
         if: always() && hashFiles('snyk.sarif') != ''
