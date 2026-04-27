@@ -145,10 +145,13 @@ jobs:
           mvn -N install -DskipTests -B -q
           mvn -pl common-library -am install -DskipTests -B -q
 
-      # Maven wrapper is checked in without executable bit; Snyk auto-detects
-      # `./mvnw` in the service dir and fails with EACCES otherwise.
-      - name: Make Maven wrapper executable
-        run: chmod +x ${{ matrix.service }}/mvnw
+      # The bundled Maven Wrapper is pinned to 3.8.5, which is incompatible
+      # with JDK 25. Move it aside so Snyk falls back to the runner's system
+      # `mvn` (newer 3.9.x), which can resolve the dependency tree on JDK 25.
+      - name: Hide Maven wrapper to use system mvn
+        run: |
+          mv ${{ matrix.service }}/mvnw ${{ matrix.service }}/mvnw.bak || true
+          mv ${{ matrix.service }}/mvnw.cmd ${{ matrix.service }}/mvnw.cmd.bak || true
 
       - name: Run Snyk for ${{ matrix.service }}
         working-directory: ${{ matrix.service }}
