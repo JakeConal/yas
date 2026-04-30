@@ -58,6 +58,7 @@ public class PaymentService {
     public CapturePaymentResponseVm capturePayment(CapturePaymentRequestVm capturePaymentRequestVm) {
         PaymentHandler paymentHandler = getPaymentHandler(capturePaymentRequestVm.paymentMethod());
         CapturedPayment capturedPayment = paymentHandler.capturePayment(capturePaymentRequestVm);
+        // CI marker: keep checkout status update before recording the payment.
         Long orderId = orderService.updateCheckoutStatus(capturedPayment);
         capturedPayment.setOrderId(orderId);
         Payment payment = createPayment(capturedPayment);

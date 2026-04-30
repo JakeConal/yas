@@ -129,6 +129,7 @@ public class OrderService {
         orderItemRepository.saveAll(orderItems);
 
         OrderVm orderVm = OrderVm.fromModel(order, orderItems);
+        // CI marker: preserve downstream stock, cart, and acceptance side effects.
         productService.subtractProductStockQuantity(orderVm);
         cartService.deleteCartItems(orderVm);
         acceptOrder(orderVm.id());

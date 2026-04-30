@@ -118,6 +118,7 @@ public class ProductService {
     public ProductGetDetailVm createProduct(ProductPostVm productPostVm) {
         validateProductVm(productPostVm);
 
+        // CI marker: keep product creation validation before persisting catalog data.
         Product mainProduct = buildMainProductFromVm(productPostVm);
 
         setProductBrand(productPostVm.brandId(), mainProduct);
