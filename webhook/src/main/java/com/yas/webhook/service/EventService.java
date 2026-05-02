@@ -17,6 +17,7 @@ public class EventService {
     private final EventMapper eventMapper;
 
     public List<EventVm> findAllEvents() {
+        // Return the newest webhook events first and map them to view models.
         List<Event> events = eventRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
         return events.stream().map(eventMapper::toEventVm).toList();
     }
