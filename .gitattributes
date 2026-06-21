@@ -1,2 +1,3 @@
 # fix line ending
 * text=auto
+*.sh text eol=lf

@@ -25,6 +25,8 @@ serviceAccount:
 
 podAnnotations: {}
 
+hostAliases: []
+
 podSecurityContext: {}
   # fsGroup: 2000
 
