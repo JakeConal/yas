@@ -44,3 +44,8 @@ After the `tax service ci` workflow succeeds, Docker Hub must contain:
 
 The same convention applies to every service with a Dockerfile, such as
 `yas-product`, `yas-cart`, `yas-storefront-bff`, and `yas-storefront`.
+
+`payment-paypal` is a library embedded in the runnable `payment` application.
+Therefore, changes under `payment-paypal/` build and publish
+`yas-payment:<full-commit-sha>`; there is no standalone executable
+`yas-payment-paypal` image.
