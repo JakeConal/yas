@@ -10,8 +10,11 @@ cd "$(dirname "$0")"
 helm repo add stakater https://stakater.github.io/stakater-charts
 helm repo update
 
+# `read -rd ''` returns exit 1 when it hits EOF without finding the
+# null-byte delimiter, even on successful read. `|| true` suppresses
+# that so set -e doesn't kill the script on the normal-EOF case.
 read -rd '' DOMAIN \
-< <(yq -r '.domain' ./cluster-config.yaml)
+< <(yq -r '.domain' ./cluster-config.yaml) || true
 
 # Bail loudly if cluster-config.yaml was unreadable or .domain is missing.
 # Without this, an empty DOMAIN silently propagates into every --set flag

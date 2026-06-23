@@ -3,22 +3,23 @@ set -ex
 
 # Always run from this script's own directory so relative paths
 # (./cluster-config.yaml, ./postgres/..., ./observability/...) resolve
-# regardless of where the script was invoked from.
-cd "$(dirname "$0")"
+# regardless of where the script was invoked from. The nested cd|pwd
+# resolves the absolute path even when $0 is relative (./setup-cluster.sh).
+cd "$(cd "$(dirname "$0")" && pwd)"
 
 # Helm returns exit 0 even when the release ends up in FAILED state.
 # Without this check, set -e doesn't catch the failure and the script
 # silently continues to subsequent installs — that's the bug that hid
 # the opentelemetry-collector crash and skipped prometheus/grafana/etc.
+# We rely on `helm status` returning exit code 1 for FAILED releases
+# (and missing ones), which works without jq/yq/awk dependencies.
 check_helm_release() {
   local release="$1"
   local ns="$2"
-  local status
-  status=$(helm status "$release" -n "$ns" -o json 2>/dev/null | jq -r '.info.status // "unknown"')
-  if [ "$status" = "failed" ]; then
+  if ! helm status "$release" -n "$ns" > /dev/null 2>&1; then
     echo "" >&2
-    echo "FATAL: helm release '$release' in namespace '$ns' is in FAILED state." >&2
-    echo "Re-run with: helm status $release -n $ns" >&2
+    echo "FATAL: helm release '$release' in namespace '$ns' is missing or FAILED." >&2
+    echo "Diagnose with: helm status $release -n $ns" >&2
     echo "" >&2
     helm status "$release" -n "$ns" 2>&1 | tail -30 >&2 || true
     exit 1
