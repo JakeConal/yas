@@ -1,0 +1,50 @@
+name: Publish image to Docker Hub
+description: Build and publish a service image using the commit SHA as its immutable tag
+
+inputs:
+  context:
+    description: Docker build context
+    required: true
+  image-name:
+    description: Docker Hub image name without the namespace
+    required: true
+  username:
+    description: Docker Hub username
+    required: true
+  token:
+    description: Docker Hub access token
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Prepare image tags
+      id: metadata
+      shell: bash
+      env:
+        DOCKERHUB_USERNAME: ${{ inputs.username }}
+        IMAGE_NAME: ${{ inputs.image-name }}
+      run: |
+        repository="${DOCKERHUB_USERNAME,,}/${IMAGE_NAME}"
+
+        {
+          echo "tags<<EOF"
+          echo "${repository}:${GITHUB_SHA}"
+          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            echo "${repository}:latest"
+          fi
+          echo "EOF"
+        } >> "${GITHUB_OUTPUT}"
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ inputs.username }}
+        password: ${{ inputs.token }}
+
+    - name: Build and push image
+      uses: docker/build-push-action@v6
+      with:
+        context: ${{ inputs.context }}
+        push: true
+        tags: ${{ steps.metadata.outputs.tags }}
