@@ -8,13 +8,28 @@ backend:
   databaseName: media
   ingress:
     enabled: false
+  extraObjects:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: media-sample-images
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
   extraVolumes:
     - name: media-application
       configMap:
         name: media-application-configmap
+    - name: media-sample-images
+      persistentVolumeClaim:
+        claimName: media-sample-images
   extraVolumeMounts:
     - name: media-application
       mountPath: /opt/yas/media
+    - name: media-sample-images
+      mountPath: /images
   extraApplicationConfigPaths:
     - /opt/yas/media/media-application.yaml
-

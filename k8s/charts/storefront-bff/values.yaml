@@ -20,6 +20,8 @@ backend:
       value: prod
     - name: UI_HOST
       value: http://storefront-ui:3000
+    - name: JAVA_TOOL_OPTIONS
+      value: -Dio.netty.transport.noNative=true
   extraEnvFroms:
     - secretRef:
         name: yas-keycloak-credentials-secret
