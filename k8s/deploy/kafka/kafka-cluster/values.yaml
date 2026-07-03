@@ -9,3 +9,9 @@ postgresql:
 debeziumConnect:
   image: ghcr.io/nashtech-garage/debezium-connect-postgresql:latest
   buildImage: false #Enabled when build debezium-connect-postgresql image
+  livenessProbe:
+    initialDelaySeconds: 180
+    timeoutSeconds: 5
+  readinessProbe:
+    initialDelaySeconds: 180
+    timeoutSeconds: 5

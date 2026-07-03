@@ -8,3 +8,28 @@ backend:
   databaseName: location
   ingress:
     enabled: false
+  startupProbe:
+    periodSeconds: 10
+    failureThreshold: 90
+    timeoutSeconds: 5
+    httpGet:
+      path: /actuator/health/liveness
+      port: metric
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    failureThreshold: 30
+    timeoutSeconds: 5
+    successThreshold: 1
+    httpGet:
+      path: /actuator/health/liveness
+      port: metric
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 30
+    timeoutSeconds: 5
+    successThreshold: 1
+    httpGet:
+      path: /actuator/health/readiness
+      port: metric

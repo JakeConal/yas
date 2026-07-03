@@ -90,6 +90,8 @@ lifecycle:
 
 terminationGracePeriodSeconds: 45
 
+startupProbe: null
+
 livenessProbe:
   periodSeconds: 10
   failureThreshold: 12

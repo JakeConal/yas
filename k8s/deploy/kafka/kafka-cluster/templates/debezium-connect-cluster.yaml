@@ -8,6 +8,10 @@ spec:
   replicas: 1
   bootstrapServers: kafka-cluster-kafka-bootstrap:9092
   image: {{ .Values.debeziumConnect.image }}
+  livenessProbe:
+    {{- toYaml .Values.debeziumConnect.livenessProbe | nindent 4 }}
+  readinessProbe:
+    {{- toYaml .Values.debeziumConnect.readinessProbe | nindent 4 }}
   config:
     config.providers: secrets
     config.providers.secrets.class: io.strimzi.kafka.KubernetesSecretConfigProvider

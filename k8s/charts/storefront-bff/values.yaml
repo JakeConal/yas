@@ -42,3 +42,26 @@ backend:
   extraApplicationConfigPaths:
     - /opt/yas/gateway-routes-config/gateway-routes-config.yaml
     - /opt/yas/extra-config/storefront-bff-extra-config.yaml
+  startupProbe:
+    periodSeconds: 10
+    failureThreshold: 60
+    timeoutSeconds: 5
+    httpGet:
+      path: /actuator/health/liveness
+      port: metric
+  livenessProbe:
+    periodSeconds: 10
+    failureThreshold: 12
+    timeoutSeconds: 5
+    successThreshold: 1
+    httpGet:
+      path: /actuator/health/liveness
+      port: metric
+  readinessProbe:
+    periodSeconds: 10
+    failureThreshold: 12
+    timeoutSeconds: 5
+    successThreshold: 1
+    httpGet:
+      path: /actuator/health/readiness
+      port: metric
