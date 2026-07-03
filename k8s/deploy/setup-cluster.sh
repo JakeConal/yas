@@ -134,6 +134,7 @@ check_helm_release elasticsearch-cluster elasticsearch
 helm upgrade --install loki grafana/loki \
  --create-namespace --namespace observability \
  -f ./observability/loki.values.yaml \
+ --wait --timeout 20m \
  --set loki.useTestSchema=true
 check_helm_release loki observability
 
@@ -158,7 +159,7 @@ check_helm_release cert-manager cert-manager
 helm upgrade --install opentelemetry-operator open-telemetry/opentelemetry-operator \
 --create-namespace --namespace observability
 
-kubectl rollout status deployment/opentelemetry-operator --namespace observability --timeout=180s
+kubectl rollout status deployment/opentelemetry-operator --namespace observability --timeout=10m
 
 check_helm_release opentelemetry-operator observability
 
