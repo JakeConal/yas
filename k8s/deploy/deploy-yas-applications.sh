@@ -26,6 +26,20 @@ fi
 
 MINIKUBE_IP="$(minikube ip)"
 
+DISABLED_BACKEND_SERVICES=(
+  location
+  payment
+  payment-paypal
+  promotion
+  rating
+  recommendation
+  webhook
+)
+
+for deployment in "${DISABLED_BACKEND_SERVICES[@]}" ; do
+    kubectl scale deployment/"$deployment" -n yas --replicas=0 2>/dev/null || true
+done
+
 helm dependency build ../charts/backoffice-bff
 helm upgrade --install backoffice-bff ../charts/backoffice-bff \
 --namespace yas --create-namespace \
@@ -58,7 +72,19 @@ helm upgrade --install swagger-ui ../charts/swagger-ui \
 
 sleep 20
 
-for chart in {"cart","customer","inventory","location","media","order","payment","payment-paypal","product","promotion","rating","search","tax","recommendation","webhook","sampledata"} ; do
+ENABLED_BACKEND_SERVICES=(
+  product
+  cart
+  order
+  customer
+  inventory
+  tax
+  media
+  search
+  sampledata
+)
+
+for chart in "${ENABLED_BACKEND_SERVICES[@]}" ; do
     helm dependency build ../charts/"$chart"
     helm upgrade --install "$chart" ../charts/"$chart" \
     --namespace yas --create-namespace \

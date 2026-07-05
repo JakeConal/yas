@@ -8,24 +8,53 @@ TIMEOUT="${TIMEOUT:-900s}"
 STARTUP_FAILURE_THRESHOLD="${STARTUP_FAILURE_THRESHOLD:-180}"
 PROBE_FAILURE_THRESHOLD="${PROBE_FAILURE_THRESHOLD:-30}"
 
-# Start heavier Spring Boot services one at a time. This avoids several
+# Start the services kept for the demo flow one at a time. This avoids several
 # BestEffort Java pods competing for memory during Minikube cold starts.
 ORDERED_DEPLOYMENTS=(
-  storefront-bff
-  location
+  product
+  cart
+  order
+  customer
+  inventory
+  tax
   media
+  search
+  storefront-bff
+  storefront-ui
+  backoffice-bff
+  backoffice-ui
+  swagger-ui
+  sampledata
+)
+
+DISABLED_DEPLOYMENTS=(
+  location
+  payment
+  payment-paypal
+  promotion
+  rating
+  recommendation
+  webhook
 )
 
 patch_deployment_for_cold_start() {
   local deployment="$1"
 
-  kubectl patch deployment "$deployment" -n "$NAMESPACE" --type='json' -p="[
+  if kubectl get deployment "$deployment" -n "$NAMESPACE" \
+    -o jsonpath='{.spec.template.spec.containers[0].startupProbe.failureThreshold}' 2>/dev/null | grep -q .; then
+    kubectl patch deployment "$deployment" -n "$NAMESPACE" --type='json' -p="[
     {\"op\":\"replace\",\"path\":\"/spec/strategy/rollingUpdate/maxSurge\",\"value\":0},
     {\"op\":\"replace\",\"path\":\"/spec/strategy/rollingUpdate/maxUnavailable\",\"value\":1},
     {\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/startupProbe/failureThreshold\",\"value\":$STARTUP_FAILURE_THRESHOLD},
     {\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/livenessProbe/failureThreshold\",\"value\":$PROBE_FAILURE_THRESHOLD},
     {\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/readinessProbe/failureThreshold\",\"value\":$PROBE_FAILURE_THRESHOLD}
   ]"
+  else
+    kubectl patch deployment "$deployment" -n "$NAMESPACE" --type='json' -p="[
+    {\"op\":\"replace\",\"path\":\"/spec/strategy/rollingUpdate/maxSurge\",\"value\":0},
+    {\"op\":\"replace\",\"path\":\"/spec/strategy/rollingUpdate/maxUnavailable\",\"value\":1}
+  ]"
+  fi
 }
 
 wait_for_pod_to_exist() {
@@ -45,12 +74,17 @@ wait_for_pod_to_exist() {
   done
 }
 
+echo "Scaling disabled deployments down in namespace '$NAMESPACE'..."
+for deployment in "${DISABLED_DEPLOYMENTS[@]}"; do
+  kubectl scale deployment/"$deployment" -n "$NAMESPACE" --replicas=0 2>/dev/null || true
+done
+
 echo "Scaling ordered deployments down in namespace '$NAMESPACE'..."
 kubectl scale -n "$NAMESPACE" "${ORDERED_DEPLOYMENTS[@]/#/deployment/}" --replicas=0
 
 echo "Waiting for old ordered pods to terminate..."
 kubectl wait --for=delete pod -n "$NAMESPACE" \
-  -l 'app.kubernetes.io/name in (storefront-bff,location,media)' \
+  -l 'app.kubernetes.io/name in (product,cart,order,customer,inventory,tax,media,search,storefront-bff,storefront-ui,backoffice-bff,backoffice-ui,swagger-ui,sampledata)' \
   --timeout=180s || true
 
 for deployment in "${ORDERED_DEPLOYMENTS[@]}"; do
