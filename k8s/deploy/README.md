@@ -27,17 +27,17 @@ minikube addons enable ingress
 - Install yq (the tool read, update yaml file)
   https://github.com/mikefarah/yq
 - Goto `k8s-deployment` folder
-- Execute [setup-keycloak.sh](setup-cluster.sh) to set up keycloak as the Identity and Access Management server.
+- Execute [setup-cluster.sh](setup-cluster.sh) first to set up servers including PostgreSQL, which Keycloak requires.
+```shell
+./setup-cluster.sh
+```
+- Execute [setup-keycloak.sh](setup-keycloak.sh) to set up Keycloak as the Identity and Access Management server.
 ```shell
 ./setup-keycloak.sh
 ```
-- Execute [setup-redis.sh](setup-cluster.sh) to set up Redis as the server to store sessions for backends.
+- Execute [setup-redis.sh](setup-redis.sh) to set up Redis as the server to store sessions for backends.
 ```shell
 ./setup-redis.sh
-```
-- Execute [setup-cluster.sh](setup-cluster.sh) to set up severs: `postgresql`, `elasticsearch`, `kafka`, `debezium connect`
-```shell
-./setup-cluster.sh
 ```
 - Verify all servers run successful on namespaces: `postgres`, `elasticsearch`, `kafka`, `keycloak`
 - After all above servers are running status, execute  [deploy-yas-applications.sh](deploy-yas-applications.sh) file to deploy all of yas applications to `yas` namespace

@@ -1,0 +1,109 @@
+# Nginx reverse proxy for the YAS backend microservices.
+# The BFF (Spring Cloud Gateway) strips /api from incoming requests and
+# forwards them to http://nginx, which then routes to the actual
+# backend services by path prefix.
+#
+# The original nginx config in ../nginx/templates/default.conf.template
+# used server_name directives that wouldn't match the BFF's Host header,
+# so this deployment uses server_name _ to act as a catch-all.
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-yas-config
+  namespace: yas
+data:
+  default.conf: |
+    server {
+      listen 80;
+      server_name _;
+
+      # Don't resolve upstream hostnames at startup — defer to request time.
+      # Use kube-dns (10.96.0.10 is the cluster DNS service). 127.0.0.11 is
+      # Docker DNS which doesn't exist in Kubernetes.
+      resolver 10.96.0.10 valid=10s ipv6=off;
+
+      # All BFF-proxied paths — route to the corresponding backend service.
+      # Path prefix matching: longest specific match wins.
+      location /media/          { proxy_pass http://media; }
+      location /swagger-ui/      { proxy_pass http://swagger-ui:8080; }
+      location /product/         { proxy_pass http://product; }
+      location /customer/        { proxy_pass http://customer; }
+      location /cart/            { proxy_pass http://cart; }
+      location /rating/          { proxy_pass http://rating; }
+      location /order/           { proxy_pass http://order; }
+      location /location/        { proxy_pass http://location; }
+      location /inventory/       { proxy_pass http://inventory; }
+      location /tax/             { proxy_pass http://tax; }
+      location /promotion/       { proxy_pass http://promotion; }
+      location /payment/         { proxy_pass http://payment; }
+      location /payment-paypal/  { proxy_pass http://payment-paypal; }
+      location /sampledata/      { proxy_pass http://sampledata; }
+
+      location /search/         { proxy_pass http://search; }
+      location /webhook/        { proxy_pass http://webhook; }
+      location /recommendation/ { proxy_pass http://recommendation; }
+
+      # Health check for k8s probes
+      location = /healthz {
+        access_log off;
+        return 200 "ok\n";
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-yas
+  namespace: yas
+  labels:
+    app: nginx-yas
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-yas
+  template:
+    metadata:
+      labels:
+        app: nginx-yas
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+      volumes:
+        - name: config
+          configMap:
+            name: nginx-yas-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  namespace: yas
+spec:
+  selector:
+    app: nginx-yas
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP

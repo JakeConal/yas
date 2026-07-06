@@ -2,8 +2,8 @@ ui:
   image:
     repository: ghcr.io/nashtech-garage/yas-storefront
     tag: latest
-  nameOverride: storefront-ui
-  fullnameOverride: storefront-ui
+  nameOverride: storefront-nextjs
+  fullnameOverride: storefront-nextjs
 #  extraVolumes:
 #    - name: storefront-env-production
 #      configMap:
@@ -18,7 +18,7 @@ ui:
 #      subPath: .env.production
   extraEnvs:
     - name: API_BASE_PATH
-      value: http://storefront.yas.local.com/api
+      value: http://storefront-bff/api
   ingress:
     enabled: false
 

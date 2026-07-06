@@ -1,0 +1,15 @@
+{{- if .Values.imageStorage.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media-images
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.imageStorage.size }}
+  {{- if .Values.imageStorage.storageClassName }}
+  storageClassName: {{ .Values.imageStorage.storageClassName }}
+  {{- end }}
+{{- end }}
