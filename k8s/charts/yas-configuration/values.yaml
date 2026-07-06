@@ -247,7 +247,7 @@ mediaApplicationConfig:
     servlet:
       context-path: /media
   yas:
-    publicUrl: http://api.yas.local.com/media
+    publicUrl: /api/media
 
 # Customer application config custom
 customerApplicationConfig:

@@ -41,10 +41,9 @@ data:
       location /payment-paypal/  { proxy_pass http://payment-paypal; }
       location /sampledata/      { proxy_pass http://sampledata; }
 
-      # These need the var trick so nginx doesn't try to resolve on startup.
-      location /search/         { set $upstream search;            proxy_pass http://$upstream; }
-      location /webhook/        { set $upstream webhook;           proxy_pass http://$upstream; }
-      location /recommendation/ { set $upstream recommendation;    proxy_pass http://$upstream; }
+      location /search/         { proxy_pass http://search; }
+      location /webhook/        { proxy_pass http://webhook; }
+      location /recommendation/ { proxy_pass http://recommendation; }
 
       # Health check for k8s probes
       location = /healthz {

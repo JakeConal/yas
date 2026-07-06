@@ -1,0 +1,82 @@
+name: ArgoCD GitOps Updater
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+jobs:
+  update-gitops:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for branches and tags
+
+      - name: Determine Environment and Setup Branch
+        id: env_setup
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+             ENV="staging"
+             TARGET_BRANCH="env-staging"
+             TAG="${GITHUB_REF_NAME}"
+             echo "Triggered by tag. Environment: staging. Tag: $TAG"
+          else
+             ENV="dev"
+             TARGET_BRANCH="env-dev"
+             TAG="${GITHUB_SHA}"
+             echo "Triggered by push to main. Environment: dev. Tag: $TAG"
+          fi
+          
+          echo "ENV=$ENV" >> $GITHUB_ENV
+          echo "TARGET_BRANCH=$TARGET_BRANCH" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
+          
+          # Git config
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Check if target branch exists on remote, if not create it
+          if git ls-remote --exit-code --heads origin $TARGET_BRANCH; then
+             echo "Branch $TARGET_BRANCH exists. Checking out..."
+             git checkout $TARGET_BRANCH
+             
+             # If staging, we want to bring the exact code from the tag to the staging branch
+             if [ "$ENV" == "staging" ]; then
+                git merge --strategy-option=theirs ${GITHUB_REF} --no-edit || true
+             else
+                git merge --strategy-option=theirs main --no-edit || true
+             fi
+          else
+             echo "Branch $TARGET_BRANCH does not exist. Creating..."
+             git checkout -b $TARGET_BRANCH
+          fi
+
+      - name: Update Helm Values Image Tags
+        run: |
+          python3 -c "
+          import os, re
+          tag = os.environ['IMAGE_TAG']
+          for chart in os.listdir('k8s/charts'):
+              val_file = os.path.join('k8s/charts', chart, 'values.yaml')
+              if os.path.isfile(val_file):
+                  with open(val_file, 'r') as f:
+                      content = f.read()
+                  new_content = re.sub(r'([ \t]*tag:).*', r'\g<1> ' + tag, content)
+                  with open(val_file, 'w') as f:
+                      f.write(new_content)
+          print('Successfully updated tags to ' + tag)
+          "
+
+      - name: Commit and Push
+        run: |
+          git add k8s/charts/*/values.yaml
+          if git diff --staged --quiet; then
+             echo "No changes to commit"
+          else
+             git commit -m "[skip ci] ArgoCD GitOps: Update $ENV image tags to $IMAGE_TAG"
+             git push origin $TARGET_BRANCH
+          fi

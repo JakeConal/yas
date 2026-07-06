@@ -1,0 +1,57 @@
+name: Developer Build CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      service_name:
+        description: 'Service name to deploy (e.g., tax, cart, order...)'
+        required: true
+        type: string
+        default: 'tax'
+      branch_name:
+        description: 'Branch name containing new code (e.g., dev_tax_service)'
+        required: true
+        type: string
+        default: 'main'
+
+jobs:
+  deploy:
+    runs-on: self-hosted # Requires a self-hosted runner configured on WSL
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Get commit SHA of the branch
+        id: get_sha
+        run: |
+          SHA=$(git ls-remote origin refs/heads/${{ inputs.branch_name }} | awk '{print $1}')
+          if [ -z "$SHA" ]; then
+            echo "Branch '${{ inputs.branch_name }}' not found on remote!"
+            exit 1
+          fi
+          echo "IMAGE_TAG=${SHA}" >> $GITHUB_ENV
+          
+      - name: Deploy service via Helm
+        env:
+          DOMAIN: "yas.local" # Domain used for ingress
+        run: |
+          SERVICE="${{ inputs.service_name }}"
+          TAG="${{ env.IMAGE_TAG }}"
+          echo "Deploying service $SERVICE with image tag $TAG"
+          
+          cd k8s/charts/$SERVICE
+          helm dependency build .
+          
+          DOCKER_USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
+          if [ -z "$DOCKER_USERNAME" ]; then
+            DOCKER_USERNAME="nashtech-garage"
+          fi
+          
+          helm upgrade --install $SERVICE . \
+            --namespace yas \
+            --create-namespace \
+            --set backend.image.repository="${DOCKER_USERNAME}/yas-${SERVICE}" \
+            --set backend.image.tag=$TAG \
+            --set backend.ingress.host="api.${DOMAIN}"
+            
+          echo "Deployment successful. Get NodePort by running: kubectl get svc -n yas"
