@@ -20,12 +20,3 @@ monitoring:
     enabled: false
     grafanaAgent:
       installOperator: false
-
-# Memory tuning for single-node minikube (default 8GB chunks-cache + 1GB
-# results-cache saturate the node and starve other pods of scheduling room).
-chunksCache:
-  allocatedMemory: 256
-  allocatedCPU: 100m
-resultsCache:
-  allocatedMemory: 128
-  allocatedCPU: 100m
