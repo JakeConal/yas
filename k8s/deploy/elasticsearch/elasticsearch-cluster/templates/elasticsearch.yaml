@@ -7,7 +7,7 @@ spec:
     tls:
       selfSignedCertificate:
         disabled: true
-  version: {{ .Values.elasticsearch.version | quote }}
+  version: 8.8.1
   auth:
     fileRealm:
       - secretName: user-credentials-secret
