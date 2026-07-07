@@ -1,6 +1,5 @@
 elasticsearch:
   replicas: 1
-  version: 9.2.3
 kibana:
   ingress:
     className: nginx

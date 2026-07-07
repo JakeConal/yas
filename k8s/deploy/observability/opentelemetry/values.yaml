@@ -7,7 +7,15 @@ opentelemetryCollectorConfig:
         http:
           endpoint: 0.0.0.0:4318
   processors:
-    batch: {}
+    batch:
+    attributes:
+      actions:
+        - action: insert
+          key: loki.attribute.labels
+          value: namespace,container,pod,level,traceId
+        - action: insert
+          key: loki.format
+          value: raw
 
   exporters:
     debug:
@@ -19,4 +27,4 @@ opentelemetryCollectorConfig:
       traces:
         receivers: [otlp]
         processors: [batch]
-        exporters: [otlphttp]
+        exporters: [otlphttp, debug]

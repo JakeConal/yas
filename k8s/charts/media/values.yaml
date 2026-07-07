@@ -14,17 +14,12 @@ backend:
         name: media-application-configmap
     - name: media-images
       persistentVolumeClaim:
-        claimName: media-images
+        claimName: media-images-pvc
   extraVolumeMounts:
     - name: media-application
       mountPath: /opt/yas/media
     - name: media-images
-      mountPath: /images
+      mountPath: /mnt/media
   extraApplicationConfigPaths:
     - /opt/yas/media/media-application.yaml
-
-imageStorage:
-  enabled: true
-  size: 1Gi
-  storageClassName: standard
 
