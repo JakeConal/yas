@@ -1,7 +1,7 @@
 backend:
   image:
     repository: jakecoop17/yas-media
-    tag: d51429971ef6bd3f47299f979bc55d6fbb13757e
+    tag: latest
 
   nameOverride: media
   fullnameOverride: media

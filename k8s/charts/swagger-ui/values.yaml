@@ -8,7 +8,7 @@ image:
   repository: swaggerapi/swagger-ui
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: d51429971ef6bd3f47299f979bc55d6fbb13757e
+  tag: latest
 
 imagePullSecrets: []
 nameOverride: ""

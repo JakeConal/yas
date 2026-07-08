@@ -1,7 +1,7 @@
 ui:
   image:
     repository: jakecoop17/yas-backoffice
-    tag: d51429971ef6bd3f47299f979bc55d6fbb13757e
+    tag: latest
   nameOverride: backoffice-ui
   fullnameOverride: backoffice-ui
   ingress:

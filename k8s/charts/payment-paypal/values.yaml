@@ -1,7 +1,7 @@
 backend:
   image:
     repository: jakecoop17/yas-payment-paypal
-    tag: d51429971ef6bd3f47299f979bc55d6fbb13757e
+    tag: latest
 
   nameOverride: payment-paypal
   fullnameOverride: payment-paypal
