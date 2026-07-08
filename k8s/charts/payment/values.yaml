@@ -53,6 +53,8 @@ backend:
                     psql -h postgresql.postgres -U "$POSTGRESQL_USERNAME" -d payment <<'SQL'
                     ALTER TABLE IF EXISTS payment_provider
                       ADD COLUMN IF NOT EXISTS is_enabled boolean;
+                    ALTER TABLE IF EXISTS payment_provider
+                      ALTER COLUMN enabled SET DEFAULT true;
 
                     CREATE OR REPLACE FUNCTION sync_payment_provider_enabled()
                     RETURNS trigger AS $$
