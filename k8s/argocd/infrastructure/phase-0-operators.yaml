@@ -1,0 +1,151 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: yas-infrastructure
+  namespace: argocd
+spec:
+  description: Infrastructure services for YAS on GKE
+  sourceRepos:
+    - "*"
+  destinations:
+    - namespace: "*"
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ingress-nginx
+  namespace: argocd
+spec:
+  project: yas-infrastructure
+  source:
+    repoURL: https://kubernetes.github.io/ingress-nginx
+    chart: ingress-nginx
+    targetRevision: 4.14.1
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ingress-nginx
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgres-operator
+  namespace: argocd
+spec:
+  project: yas-infrastructure
+  source:
+    repoURL: https://opensource.zalando.com/postgres-operator/charts/postgres-operator
+    chart: postgres-operator
+    targetRevision: 1.14.0
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: postgres
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: strimzi-kafka-operator
+  namespace: argocd
+spec:
+  project: yas-infrastructure
+  source:
+    repoURL: https://strimzi.io/charts/
+    chart: strimzi-kafka-operator
+    targetRevision: 0.49.0
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kafka
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: elastic-operator
+  namespace: argocd
+spec:
+  project: yas-infrastructure
+  source:
+    repoURL: https://helm.elastic.co
+    chart: eck-operator
+    targetRevision: 3.1.0
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: elasticsearch
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+spec:
+  project: yas-infrastructure
+  source:
+    repoURL: https://charts.jetstack.io
+    chart: cert-manager
+    targetRevision: v1.12.0
+    helm:
+      valuesObject:
+        installCRDs: true
+        prometheus:
+          enabled: false
+        webhook:
+          timeoutSeconds: 4
+        admissionWebhooks:
+          certManager:
+            create: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: opentelemetry-operator
+  namespace: argocd
+spec:
+  project: yas-infrastructure
+  source:
+    repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
+    chart: opentelemetry-operator
+    targetRevision: 0.99.0
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
