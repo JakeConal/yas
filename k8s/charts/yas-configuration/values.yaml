@@ -240,6 +240,11 @@ storefrontBffExtraConfig:
               client-id: storefront-bff
               client-secret: ${KEYCLOAK_STOREFRONT_BFF_CLIENT_SECRET}
               scope: openid, profile, email, roles
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: "*"
 
 # Media application config custom
 mediaApplicationConfig:
