@@ -1,7 +1,7 @@
 backend:
   image:
-    repository: ghcr.io/nashtech-garage/yas-payment-paypal
-    tag: e966d44bf2cf3d803b9f04000af502ab9ea707bc
+    repository: jakecoop17/yas-payment-paypal
+    tag: d51429971ef6bd3f47299f979bc55d6fbb13757e
 
   nameOverride: payment-paypal
   fullnameOverride: payment-paypal

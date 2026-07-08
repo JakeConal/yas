@@ -1,7 +1,7 @@
 backend:
   image:
-    repository: ghcr.io/nashtech-garage/yas-media
-    tag: e966d44bf2cf3d803b9f04000af502ab9ea707bc
+    repository: jakecoop17/yas-media
+    tag: d51429971ef6bd3f47299f979bc55d6fbb13757e
 
   nameOverride: media
   fullnameOverride: media
