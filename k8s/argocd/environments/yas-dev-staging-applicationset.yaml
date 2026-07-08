@@ -1,0 +1,115 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: yas-dev-staging-services
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+  generators:
+    - matrix:
+        generators:
+          - list:
+              elements:
+                - env: dev
+                  namespace: dev
+                  targetRevision: codex/gke-infra-argocd
+                  host: storefront-dev.yas.local.com
+                - env: staging
+                  namespace: staging
+                  targetRevision: codex/gke-infra-argocd
+                  host: storefront-staging.yas.local.com
+          - list:
+              elements:
+                - service: yas-configuration
+                  path: k8s/charts/yas-configuration
+                  wave: "-10"
+                - service: cart
+                  path: k8s/charts/cart
+                  wave: "0"
+                - service: customer
+                  path: k8s/charts/customer
+                  wave: "0"
+                - service: inventory
+                  path: k8s/charts/inventory
+                  wave: "0"
+                - service: location
+                  path: k8s/charts/location
+                  wave: "0"
+                - service: media
+                  path: k8s/charts/media
+                  wave: "0"
+                - service: order
+                  path: k8s/charts/order
+                  wave: "0"
+                - service: payment
+                  path: k8s/charts/payment
+                  wave: "0"
+                - service: payment-paypal
+                  path: k8s/charts/payment-paypal
+                  wave: "0"
+                - service: product
+                  path: k8s/charts/product
+                  wave: "0"
+                - service: promotion
+                  path: k8s/charts/promotion
+                  wave: "0"
+                - service: rating
+                  path: k8s/charts/rating
+                  wave: "0"
+                - service: recommendation
+                  path: k8s/charts/recommendation
+                  wave: "0"
+                - service: sampledata
+                  path: k8s/charts/sampledata
+                  wave: "5"
+                - service: search
+                  path: k8s/charts/search
+                  wave: "0"
+                - service: tax
+                  path: k8s/charts/tax
+                  wave: "0"
+                - service: webhook
+                  path: k8s/charts/webhook
+                  wave: "0"
+                - service: storefront-bff
+                  path: k8s/charts/storefront-bff
+                  wave: "10"
+                - service: storefront-ui
+                  path: k8s/charts/storefront-ui
+                  wave: "10"
+  template:
+    metadata:
+      name: "{{ .env }}-{{ .service }}"
+      labels:
+        app.kubernetes.io/part-of: yas
+        yas/environment: "{{ .env }}"
+        yas/service: "{{ .service }}"
+      annotations:
+        argocd.argoproj.io/sync-wave: "{{ .wave }}"
+    spec:
+      project: yas-infrastructure
+      source:
+        repoURL: https://github.com/JakeConal/yas.git
+        targetRevision: "{{ .targetRevision }}"
+        path: "{{ .path }}"
+        helm:
+          parameters:
+            - name: backend.ingress.host
+              value: "{{ .host }}"
+            - name: ui.ingress.host
+              value: "{{ .host }}"
+            - name: mediaApplicationConfig.yas.publicUrl
+              value: "http://{{ .host }}/media"
+            - name: paymentPaypalApplicationConfig.yas.public.url
+              value: "http://{{ .host }}/complete-payment"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
