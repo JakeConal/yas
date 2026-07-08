@@ -10,16 +10,5 @@ import org.springframework.data.elasticsearch.repository.config.EnableElasticsea
 @Configuration
 @EnableElasticsearchRepositories(basePackages = "com.yas.search.repository")
 @ComponentScan(basePackages = "com.yas.search.service")
-@RequiredArgsConstructor
-public class ImperativeClientConfig extends ElasticsearchConfiguration {
-
-    private final ElasticsearchDataConfig elasticsearchConfig;
-
-    @Override
-    public ClientConfiguration clientConfiguration() {
-        return ClientConfiguration.builder()
-                .connectedTo(elasticsearchConfig.getUrl())
-                .withBasicAuth(elasticsearchConfig.getUsername(), elasticsearchConfig.getPassword())
-                .build();
-    }
+public class ImperativeClientConfig {
 }
