@@ -7,7 +7,7 @@ backend:
   fullnameOverride: storefront-bff
 
   hostAliases:
-    - ip: "34.118.230.90"
+    - ip: "34.126.171.245"
       hostnames:
         - identity.yas.local.com
 
