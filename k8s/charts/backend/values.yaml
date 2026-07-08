@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: ""
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
@@ -97,7 +97,7 @@ lifecycle:
 terminationGracePeriodSeconds: 45
 
 livenessProbe:
-  initialDelaySeconds: 600
+  initialDelaySeconds: 180
   periodSeconds: 10
   failureThreshold: 12
   successThreshold: 1
@@ -106,7 +106,7 @@ livenessProbe:
     port: metric
 
 readinessProbe:
-  initialDelaySeconds: 30
+  initialDelaySeconds: 180
   periodSeconds: 10
   failureThreshold: 12
   successThreshold: 1

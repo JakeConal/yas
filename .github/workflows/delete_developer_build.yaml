@@ -1,0 +1,19 @@
+name: Delete Developer Build CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      service_name:
+        description: 'Service name to delete (e.g., tax, cart...)'
+        required: true
+        type: string
+
+jobs:
+  delete:
+    runs-on: self-hosted # Requires a self-hosted runner
+    steps:
+      - name: Delete service via Helm
+        run: |
+          SERVICE="${{ inputs.service_name }}"
+          echo "Uninstalling $SERVICE..."
+          helm uninstall $SERVICE --namespace yas || echo "Service $SERVICE not found or already deleted."

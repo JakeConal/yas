@@ -25,14 +25,8 @@ backend:
       mountPath: /opt/yas/media
   extraApplicationConfigPaths:
     - /opt/yas/media/media-application.yaml
-  extraObjects:
-    - apiVersion: v1
-      kind: PersistentVolumeClaim
-      metadata:
-        name: media-images
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 1Gi
+
+imageStorage:
+  enabled: true
+  size: 1Gi
+  storageClassName: ""

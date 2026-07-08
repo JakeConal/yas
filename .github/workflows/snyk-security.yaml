@@ -73,7 +73,7 @@ jobs:
           java_services=()
           node_services=()
 
-          if [[ "$EVENT_NAME" == "workflow_dispatch" || "$EVENT_NAME" == "schedule" ]]; then
+          if [[ "$EVENT_NAME" == "workflow_dispatch" || "$EVENT_NAME" == "schedule" || "$BASE_SHA" == "0000000000000000000000000000000000000000" ]]; then
             java_services=("${all_java_services[@]}")
             node_services=("${all_node_services[@]}")
           else
@@ -103,8 +103,8 @@ jobs:
           node_services_json="$(to_json "${node_services[@]}")"
 
           echo "Changed files:"
-          if [[ "$EVENT_NAME" == "workflow_dispatch" || "$EVENT_NAME" == "schedule" ]]; then
-            echo "(all services selected for ${EVENT_NAME})"
+          if [[ "$EVENT_NAME" == "workflow_dispatch" || "$EVENT_NAME" == "schedule" || "$BASE_SHA" == "0000000000000000000000000000000000000000" ]]; then
+            echo "(all services selected for ${EVENT_NAME} or new branch)"
           else
             echo "$changed_files"
           fi
