@@ -32,6 +32,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Import(SearchIntegrationTestConfiguration.class)
@@ -53,13 +54,27 @@ public class ProductCdcConsumerTest extends CdcConsumerTest<ProductMsgKey, Produ
     @MockitoSpyBean
     private ProductSyncDataService productSyncDataService;
 
+    @Autowired
+    private ElasticsearchOperations elasticsearchOperations;
+
     public ProductCdcConsumerTest() {
         super(ProductMsgKey.class, ProductCdcMessage.class, "dbproduct.public.product");
     }
 
+    @org.junit.jupiter.api.BeforeEach
+    public void setUp() {
+        var indexOps = elasticsearchOperations.indexOps(com.yas.search.model.Product.class);
+        if (!indexOps.exists()) {
+            indexOps.createWithMapping();
+        }
+    }
+
     @AfterEach
     public void tearDown() {
-        productRepository.deleteAll();
+        var indexOps = elasticsearchOperations.indexOps(com.yas.search.model.Product.class);
+        if (indexOps.exists()) {
+            productRepository.deleteAll();
+        }
     }
 
     @DisplayName("When having product create event, data must sync as create")
