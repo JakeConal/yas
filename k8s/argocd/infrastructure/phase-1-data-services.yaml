@@ -119,7 +119,7 @@ spec:
   source:
     repoURL: https://charts.bitnami.com/bitnami
     chart: redis
-    targetRevision: 21.2.13
+    targetRevision: 27.0.14
     helm:
       valuesObject:
         auth:
