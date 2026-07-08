@@ -22,7 +22,7 @@ spec:
                   namespace: staging
                   targetRevision: codex/gke-infra-argocd
                   host: storefront-staging.yas.local.com
-                  replicaCount: "0"
+                  replicaCount: "1"
                   productReindexJobEnabled: "false"
           - list:
               elements:
@@ -38,32 +38,14 @@ spec:
                 - service: inventory
                   path: k8s/charts/inventory
                   wave: "0"
-                - service: location
-                  path: k8s/charts/location
-                  wave: "0"
                 - service: media
                   path: k8s/charts/media
                   wave: "0"
                 - service: order
                   path: k8s/charts/order
                   wave: "0"
-                - service: payment
-                  path: k8s/charts/payment
-                  wave: "0"
-                - service: payment-paypal
-                  path: k8s/charts/payment-paypal
-                  wave: "0"
                 - service: product
                   path: k8s/charts/product
-                  wave: "0"
-                - service: promotion
-                  path: k8s/charts/promotion
-                  wave: "0"
-                - service: rating
-                  path: k8s/charts/rating
-                  wave: "0"
-                - service: recommendation
-                  path: k8s/charts/recommendation
                   wave: "0"
                 - service: sampledata
                   path: k8s/charts/sampledata
@@ -74,14 +56,20 @@ spec:
                 - service: tax
                   path: k8s/charts/tax
                   wave: "0"
-                - service: webhook
-                  path: k8s/charts/webhook
-                  wave: "0"
+                - service: backoffice-bff
+                  path: k8s/charts/backoffice-bff
+                  wave: "10"
                 - service: storefront-bff
                   path: k8s/charts/storefront-bff
                   wave: "10"
+                - service: backoffice-ui
+                  path: k8s/charts/backoffice-ui
+                  wave: "10"
                 - service: storefront-ui
                   path: k8s/charts/storefront-ui
+                  wave: "10"
+                - service: swagger-ui
+                  path: k8s/charts/swagger-ui
                   wave: "10"
   template:
     metadata:
