@@ -177,6 +177,13 @@ gatewayRoutesConfig:
                 filters:
                   - RewritePath=/api/(?<segment>.*), /$\{segment}
                   - TokenRelay=
+              - id: payment_api
+                uri: http://payment
+                predicates:
+                  - Path=/api/payment/**
+                filters:
+                  - RewritePath=/api/(?<segment>.*), /$\{segment}
+                  - TokenRelay=
               - id: recommendation_api
                 uri: http://recommendation
                 predicates:
