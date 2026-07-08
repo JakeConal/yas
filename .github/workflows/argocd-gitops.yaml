@@ -74,9 +74,5 @@ jobs:
       - name: Commit and Push
         run: |
           git add k8s/charts/*/values.yaml
-          if git diff --staged --quiet; then
-             echo "No changes to commit"
-          else
-             git commit -m "[skip ci] ArgoCD GitOps: Update $ENV image tags to $IMAGE_TAG"
-             git push origin $TARGET_BRANCH
-          fi
+          git commit -m "[skip ci] ArgoCD GitOps: Update $ENV image tags to $IMAGE_TAG" || true
+          git push origin $TARGET_BRANCH
