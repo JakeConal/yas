@@ -94,7 +94,7 @@ lifecycle:
 terminationGracePeriodSeconds: 45
 
 livenessProbe:
-  initialDelaySeconds: 180
+  initialDelaySeconds: 600
   periodSeconds: 10
   failureThreshold: 12
   successThreshold: 1
