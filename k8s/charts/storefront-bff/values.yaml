@@ -39,3 +39,13 @@ backend:
       mountPath: /opt/yas/extra-config
   extraApplicationConfigPaths:
     - /opt/yas/extra-config/storefront-bff-extra-config.yaml
+livenessProbe:
+  initialDelaySeconds: 180
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 12
+readinessProbe:
+  initialDelaySeconds: 180
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 12
