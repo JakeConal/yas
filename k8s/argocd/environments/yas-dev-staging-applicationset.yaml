@@ -89,13 +89,19 @@ spec:
         helm:
           parameters:
             - name: backend.ingress.host
-              value: "{{ .host }}"
+              value: "{{ if eq .service \"backoffice-bff\" }}backoffice-{{ .env }}.yas.local.com{{ else }}{{ .host }}{{ end }}"
             - name: ui.ingress.host
               value: "{{ .host }}"
+            - name: replicaCount
+              value: "{{ .replicaCount }}"
             - name: backend.replicaCount
               value: "{{ .replicaCount }}"
             - name: ui.replicaCount
               value: "{{ .replicaCount }}"
+            - name: ingress.host
+              value: "api-{{ .env }}.yas.local.com"
+            - name: ingress.hosts[0].host
+              value: "api-{{ .env }}.yas.local.com"
             - name: reloader.reloader.enableHA
               value: "true"
             - name: reloader.reloader.deployment.replicas
