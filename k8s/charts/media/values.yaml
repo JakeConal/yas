@@ -8,8 +8,9 @@ backend:
   databaseName: media
   ingress:
     enabled: true
-    host: api.yas.local.com
+    host: storefront.yas.local.com
     path: /media
+    pathType: Prefix
   extraVolumes:
     - name: media-images
       persistentVolumeClaim:
