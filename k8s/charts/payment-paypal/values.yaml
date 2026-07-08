@@ -1,11 +1,34 @@
 backend:
   image:
-    repository: jakecoop17/yas-payment-paypal
-    tag: latest
+    repository: hashicorp/http-echo
+    tag: "1.0"
+  command:
+    - /http-echo
+  args:
+    - -listen=:80
+    - -text=payment-paypal service is embedded in payment
 
   nameOverride: payment-paypal
   fullnameOverride: payment-paypal
   databaseName: payment-paypal
+  serviceMonitor:
+    enabled: false
+  livenessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    failureThreshold: 3
+    successThreshold: 1
+    httpGet:
+      path: /
+      port: http
+  readinessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    failureThreshold: 3
+    successThreshold: 1
+    httpGet:
+      path: /
+      port: http
   ingress:
     enabled: false
   extraVolumes:

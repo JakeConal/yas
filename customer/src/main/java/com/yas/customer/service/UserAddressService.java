@@ -60,7 +60,7 @@ public class UserAddressService {
         }
 
         UserAddress userAddress = userAddressRepository.findByUserIdAndIsActiveTrue(userId)
-            .orElseThrow(() -> new NotFoundException(Constants.ErrorCode.USER_ADDRESS_NOT_FOUND));
+            .orElseGet(() -> activateFirstUserAddress(userId));
 
         return locationService.getAddressById(userAddress.getAddressId());
     }
@@ -70,14 +70,22 @@ public class UserAddressService {
 
         // Fetch all existing addresses for the user
         List<UserAddress> userAddressList = userAddressRepository.findAllByUserId(userId);
-        boolean isFirstAddress = userAddressList.isEmpty();
+        boolean shouldActivateAddress = userAddressList.isEmpty()
+            || userAddressList.stream().noneMatch(UserAddress::getIsActive);
 
         AddressVm addressGetVm = locationService.createAddress(addressPostVm);
         UserAddress userAddress =
-            UserAddress.builder().userId(userId).addressId(addressGetVm.id()).isActive(isFirstAddress).build();
+            UserAddress.builder().userId(userId).addressId(addressGetVm.id()).isActive(shouldActivateAddress).build();
 
         return UserAddressVm.fromModel(userAddressRepository.save(userAddress), addressGetVm);
 
+    }
+
+    private UserAddress activateFirstUserAddress(String userId) {
+        UserAddress userAddress = userAddressRepository.findFirstByUserIdOrderByIdAsc(userId)
+            .orElseThrow(() -> new NotFoundException(Constants.ErrorCode.USER_ADDRESS_NOT_FOUND));
+        userAddress.setIsActive(true);
+        return userAddressRepository.save(userAddress);
     }
 
     public void deleteAddress(Long id) {

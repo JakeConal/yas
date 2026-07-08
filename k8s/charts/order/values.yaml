@@ -1,7 +1,7 @@
 backend:
   image:
-    repository: jakecoop17/yas-order
-    tag: latest
+    repository: asia-southeast1-docker.pkg.dev/encoded-antenna-501811-p4/yas-docker/yas-order
+    tag: schema-customerid-d03cc02e-20260708223316
 
   nameOverride: order
   fullnameOverride: order
@@ -16,4 +16,46 @@ backend:
     - name: order-application-config
       mountPath: /opt/yas/order
   extraApplicationConfigPaths:
-    - /opt/yas/order/order-application.yaml  
+    - /opt/yas/order/order-application.yaml
+  extraObjects:
+    - apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: order-schema-compat
+        annotations:
+          argocd.argoproj.io/hook: PreSync
+          argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+      spec:
+        backoffLimit: 3
+        ttlSecondsAfterFinished: 600
+        template:
+          spec:
+            restartPolicy: Never
+            containers:
+              - name: migrate
+                image: postgres:15-alpine
+                imagePullPolicy: IfNotPresent
+                env:
+                  - name: PGPASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: yas-postgresql-credentials-secret
+                        key: POSTGRESQL_PASSWORD
+                  - name: POSTGRESQL_USERNAME
+                    valueFrom:
+                      secretKeyRef:
+                        name: yas-postgresql-credentials-secret
+                        key: POSTGRESQL_USERNAME
+                command:
+                  - sh
+                  - -ec
+                  - |
+                    psql -h postgresql.postgres -U "$POSTGRESQL_USERNAME" -d "order" <<'SQL'
+                    ALTER TABLE IF EXISTS "checkout"
+                      ALTER COLUMN customer_id DROP DEFAULT,
+                      ALTER COLUMN customer_id TYPE varchar(255) USING customer_id::varchar;
+
+                    ALTER TABLE IF EXISTS "order"
+                      ALTER COLUMN customer_id DROP DEFAULT,
+                      ALTER COLUMN customer_id TYPE varchar(255) USING customer_id::varchar;
+                    SQL

@@ -25,6 +25,11 @@ serviceAccount:
 
 podAnnotations: {}
 
+hostAliases:
+  - ip: "34.126.171.245"
+    hostnames:
+      - identity.yas.local.com
+
 podSecurityContext: {}
   # fsGroup: 2000
 
@@ -45,6 +50,9 @@ deployment:
   annotations:
     reloader.stakater.com/search: "true"
   extraAnnotations: []
+
+updateStrategy:
+  type: Recreate
 
 extraEnvs: []
 #  - name: EXTRA_VARIABLE_NAME

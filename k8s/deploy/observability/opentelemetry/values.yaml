@@ -7,7 +7,7 @@ opentelemetryCollectorConfig:
         http:
           endpoint: 0.0.0.0:4318
   processors:
-    batch:
+    batch: {}
     attributes:
       actions:
         - action: insert
@@ -28,3 +28,11 @@ opentelemetryCollectorConfig:
         receivers: [otlp]
         processors: [batch]
         exporters: [otlphttp, debug]
+    telemetry:
+      metrics:
+        readers:
+          - pull:
+              exporter:
+                prometheus:
+                  host: 0.0.0.0
+                  port: 8888

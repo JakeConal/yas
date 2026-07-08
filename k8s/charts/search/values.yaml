@@ -20,3 +20,6 @@ backend:
       mountPath: /opt/yas/search
   extraApplicationConfigPaths:
     - /opt/yas/search/search-application.yaml
+
+productReindexJob:
+  enabled: true

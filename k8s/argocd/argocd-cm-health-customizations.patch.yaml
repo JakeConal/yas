@@ -1,0 +1,35 @@
+data:
+  resource.customizations.health.grafana.integreatly.org_Grafana: |
+    hs = {}
+    if obj.status ~= nil and obj.status.stage == "complete" and obj.status.stageStatus == "success" then
+      hs.status = "Healthy"
+      hs.message = "Grafana is complete"
+    else
+      hs.status = "Progressing"
+      if obj.status ~= nil and obj.status.stage ~= nil then
+        hs.message = "Grafana stage: " .. obj.status.stage
+      else
+        hs.message = "Waiting for Grafana status"
+      end
+    end
+    return hs
+  resource.customizations.health.grafana.integreatly.org_GrafanaDashboard: |
+    hs = {}
+    if obj.status ~= nil and obj.status.uid ~= nil and obj.status.lastResync ~= nil then
+      hs.status = "Healthy"
+      hs.message = "Dashboard synced to Grafana"
+    else
+      hs.status = "Progressing"
+      hs.message = "Waiting for dashboard sync"
+    end
+    return hs
+  resource.customizations.health.grafana.integreatly.org_GrafanaDatasource: |
+    hs = {}
+    if obj.status ~= nil and obj.status.uid ~= nil and obj.status.lastResync ~= nil then
+      hs.status = "Healthy"
+      hs.message = "Datasource synced to Grafana"
+    else
+      hs.status = "Progressing"
+      hs.message = "Waiting for datasource sync"
+    end
+    return hs

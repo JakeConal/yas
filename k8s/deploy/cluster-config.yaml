@@ -16,7 +16,13 @@ keycloak:
     username: admin
     password: admin
   backofficeRedirectUrl: http://backoffice.yas.local.com
+  extraBackofficeRedirectUrls:
+    - http://backoffice-dev.yas.local.com
+    - http://backoffice-staging.yas.local.com
   storefrontRedirectUrl: http://storefront.yas.local.com
+  extraStorefrontRedirectUrls:
+    - http://storefront-dev.yas.local.com
+    - http://storefront-staging.yas.local.com
 grafana:
   username: admin
   password: admin

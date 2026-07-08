@@ -7,21 +7,26 @@ backend:
   fullnameOverride: media
   databaseName: media
   ingress:
-    enabled: false
+    enabled: true
+    host: storefront.yas.local.com
+    path: /media
+    pathType: Prefix
   extraVolumes:
+    - name: media-images
+      persistentVolumeClaim:
+        claimName: media-images
     - name: media-application
       configMap:
         name: media-application-configmap
-    - name: media-images
-      persistentVolumeClaim:
-        claimName: media-images-pvc
   extraVolumeMounts:
+    - name: media-images
+      mountPath: /images
     - name: media-application
       mountPath: /opt/yas/media
-    - name: media-images
-      mountPath: /mnt/media
   extraApplicationConfigPaths:
     - /opt/yas/media/media-application.yaml
 
 imageStorage:
-  enabled: false
+  enabled: true
+  size: 1Gi
+  storageClassName: ""
