@@ -14,13 +14,13 @@ spec:
               elements:
                 - env: dev
                   namespace: dev
-                  targetRevision: codex/gke-infra-argocd
+                  targetRevision: main
                   host: storefront-dev.yas.local.com
                   replicaCount: "1"
                   productReindexJobEnabled: "true"
                 - env: staging
                   namespace: staging
-                  targetRevision: codex/gke-infra-argocd
+                  targetRevision: main
                   host: storefront-staging.yas.local.com
                   replicaCount: "0"
                   productReindexJobEnabled: "false"
@@ -38,11 +38,20 @@ spec:
                 - service: inventory
                   path: k8s/charts/inventory
                   wave: "0"
+                - service: location
+                  path: k8s/charts/location
+                  wave: "0"
                 - service: media
                   path: k8s/charts/media
                   wave: "0"
                 - service: order
                   path: k8s/charts/order
+                  wave: "0"
+                - service: payment
+                  path: k8s/charts/payment
+                  wave: "0"
+                - service: payment-paypal
+                  path: k8s/charts/payment-paypal
                   wave: "0"
                 - service: product
                   path: k8s/charts/product
