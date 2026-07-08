@@ -1,7 +1,7 @@
 backend:
   image:
-    repository: ghcr.io/nashtech-garage/yas-order
-    tag: latest
+    repository: asia-southeast1-docker.pkg.dev/encoded-antenna-501811-p4/yas-docker/yas-order
+    tag: checkout-dto-eee48944-20260708221241
 
   nameOverride: order
   fullnameOverride: order
