@@ -48,6 +48,9 @@ deployment:
     reloader.stakater.com/search: "true"
   extraAnnotations: []
 
+updateStrategy:
+  type: Recreate
+
 extraEnvs: []
 #  - name: EXTRA_VARIABLE_NAME
 #    value: extra variable data
