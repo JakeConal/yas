@@ -100,8 +100,6 @@ spec:
               value: "{{ .replicaCount }}"
             - name: ingress.host
               value: "api-{{ .env }}.yas.local.com"
-            - name: ingress.hosts[0].host
-              value: "api-{{ .env }}.yas.local.com"
             - name: reloader.reloader.enableHA
               value: "true"
             - name: reloader.reloader.deployment.replicas
