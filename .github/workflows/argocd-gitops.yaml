@@ -61,7 +61,7 @@ jobs:
         run: |
           python3 -c "
           import os, re
-          tag = os.environ['IMAGE_TAG']
+          tag = 'latest'
           docker_user = os.environ.get('DOCKER_USER') or 'nashtech-garage'
           for chart in os.listdir('k8s/charts'):
               val_file = os.path.join('k8s/charts', chart, 'values.yaml')
