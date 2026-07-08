@@ -6,6 +6,11 @@ backend:
   nameOverride: storefront-bff
   fullnameOverride: storefront-bff
 
+  hostAliases:
+    - ip: "34.118.230.90"
+      hostnames:
+        - identity.yas.local.com
+
   deployment:
     annotations:
       configmap.reloader.stakater.com/reload: "yas-gateway-routes-config-configmap,storefront-bff-extra-configmap"
@@ -21,7 +26,7 @@ backend:
     - name: UI_HOST
       value: http://storefront-ui:3000
     - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI
-      value: ""
+      value: http://identity.yas.local.com/realms/Yas
     - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_AUTHORIZATION_URI
       value: http://identity.yas.local.com/realms/Yas/protocol/openid-connect/auth
     - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_TOKEN_URI
@@ -33,7 +38,7 @@ backend:
     - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_NAME_ATTRIBUTE
       value: preferred_username
     - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
-      value: ""
+      value: http://identity.yas.local.com/realms/Yas
     - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
       value: http://keycloak-service.keycloak/realms/Yas/protocol/openid-connect/certs
   extraEnvFroms:
