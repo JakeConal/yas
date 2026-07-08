@@ -21,18 +21,17 @@ Apply it with:
 kubectl apply -k k8s/argocd/environments
 ```
 
-The current `targetRevision` is `codex/gke-infra-argocd` so the GKE demo cluster can
-sync from the branch that contains the working Kubernetes fixes. For the final CI/CD
-flow required by the assignment, update the ApplicationSet revisions as follows:
+The current `targetRevision` is `main` so the GKE demo cluster syncs from the same
+branch used by the GitHub Actions CI/CD flow required by the assignment:
 
 - `dev.targetRevision`: `main`
 - `staging.targetRevision`: a release tag such as `v1.2.3`, or a release branch such as `staging` / `rc_v1.2.3`
 
-Recommended Jenkins flow:
+Recommended GitHub Actions flow:
 
-1. On commit to `main`, Jenkins builds service images with a dev tag, updates the
+1. On commit to `main`, GitHub Actions builds service images with a dev tag, updates the
    dev manifests or image tags, and ArgoCD auto-syncs the `dev-*` apps.
-2. On release tag `v1.2.3`, Jenkins builds images with tag `v1.2.3`, updates the
+2. On release tag `v1.2.3`, GitHub Actions builds images with tag `v1.2.3`, updates the
    staging manifests or switches staging `targetRevision` to the tag, and ArgoCD
    syncs the `staging-*` apps.
 

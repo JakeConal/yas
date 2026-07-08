@@ -7,7 +7,7 @@ spec:
   project: yas-infrastructure
   source:
     repoURL: https://github.com/JakeConal/yas.git
-    targetRevision: codex/gke-infra-argocd
+    targetRevision: main
     path: k8s/deploy/keycloak/keycloak
   destination:
     server: https://kubernetes.default.svc

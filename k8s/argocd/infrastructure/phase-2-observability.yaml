@@ -13,7 +13,7 @@ spec:
         valueFiles:
           - $values/k8s/deploy/observability/loki.values.yaml
     - repoURL: https://github.com/JakeConal/yas.git
-      targetRevision: codex/gke-infra-argocd
+      targetRevision: main
       ref: values
   destination:
     server: https://kubernetes.default.svc
@@ -40,7 +40,7 @@ spec:
         valueFiles:
           - $values/k8s/deploy/observability/tempo.values.yaml
     - repoURL: https://github.com/JakeConal/yas.git
-      targetRevision: codex/gke-infra-argocd
+      targetRevision: main
       ref: values
   destination:
     server: https://kubernetes.default.svc
@@ -67,7 +67,7 @@ spec:
         valueFiles:
           - $values/k8s/deploy/observability/promtail.values.yaml
     - repoURL: https://github.com/JakeConal/yas.git
-      targetRevision: codex/gke-infra-argocd
+      targetRevision: main
       ref: values
   destination:
     server: https://kubernetes.default.svc
@@ -94,7 +94,7 @@ spec:
         valueFiles:
           - $values/k8s/deploy/observability/prometheus.values.yaml
     - repoURL: https://github.com/JakeConal/yas.git
-      targetRevision: codex/gke-infra-argocd
+      targetRevision: main
       ref: values
   destination:
     server: https://kubernetes.default.svc
@@ -137,7 +137,7 @@ spec:
   project: yas-infrastructure
   source:
     repoURL: https://github.com/JakeConal/yas.git
-    targetRevision: codex/gke-infra-argocd
+    targetRevision: main
     path: k8s/deploy/observability/grafana
   destination:
     server: https://kubernetes.default.svc
@@ -158,7 +158,7 @@ spec:
   project: yas-infrastructure
   source:
     repoURL: https://github.com/JakeConal/yas.git
-    targetRevision: codex/gke-infra-argocd
+    targetRevision: main
     path: k8s/deploy/observability/opentelemetry
   destination:
     server: https://kubernetes.default.svc

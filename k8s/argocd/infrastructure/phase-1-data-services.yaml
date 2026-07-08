@@ -7,7 +7,7 @@ spec:
   project: yas-infrastructure
   source:
     repoURL: https://github.com/JakeConal/yas.git
-    targetRevision: codex/gke-infra-argocd
+    targetRevision: main
     path: k8s/deploy/postgres/postgresql
   destination:
     server: https://kubernetes.default.svc
@@ -28,7 +28,7 @@ spec:
   project: yas-infrastructure
   source:
     repoURL: https://github.com/JakeConal/yas.git
-    targetRevision: codex/gke-infra-argocd
+    targetRevision: main
     path: k8s/deploy/postgres/pgadmin
   destination:
     server: https://kubernetes.default.svc
@@ -49,7 +49,7 @@ spec:
   project: yas-infrastructure
   source:
     repoURL: https://github.com/JakeConal/yas.git
-    targetRevision: codex/gke-infra-argocd
+    targetRevision: main
     path: k8s/deploy/kafka/kafka-cluster
   destination:
     server: https://kubernetes.default.svc
@@ -76,7 +76,7 @@ spec:
         valueFiles:
           - $values/k8s/deploy/kafka/akhq.values.yaml
     - repoURL: https://github.com/JakeConal/yas.git
-      targetRevision: codex/gke-infra-argocd
+      targetRevision: main
       ref: values
   destination:
     server: https://kubernetes.default.svc
@@ -97,7 +97,7 @@ spec:
   project: yas-infrastructure
   source:
     repoURL: https://github.com/JakeConal/yas.git
-    targetRevision: codex/gke-infra-argocd
+    targetRevision: main
     path: k8s/deploy/elasticsearch/elasticsearch-cluster
   destination:
     server: https://kubernetes.default.svc
@@ -143,7 +143,7 @@ spec:
   project: yas-infrastructure
   source:
     repoURL: https://github.com/JakeConal/yas.git
-    targetRevision: codex/gke-infra-argocd
+    targetRevision: main
     path: k8s/deploy/zookeeper
   destination:
     server: https://kubernetes.default.svc
