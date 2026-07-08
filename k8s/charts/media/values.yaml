@@ -23,3 +23,5 @@ backend:
   extraApplicationConfigPaths:
     - /opt/yas/media/media-application.yaml
 
+imageStorage:
+  enabled: false

@@ -78,11 +78,9 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/workflows/actions
-      # payment-paypal is a library embedded in the payment application. Build
-      # the runnable payment module so the Docker context contains its boot JAR.
-      - name: Build Payment application package (skip tests)
+      - name: Build Payment Paypal application package (skip tests)
         run: |
-          mvn install -pl payment -am -DskipTests -Djacoco.skip=true
+          mvn install -pl payment-paypal -am -DskipTests -Djacoco.skip=true
       - name: Run Maven Checkstyle
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         run: mvn checkstyle:checkstyle -pl payment-paypal -am -Dcheckstyle.output.file=payment-paypal-checkstyle-result.xml
@@ -109,11 +107,11 @@ jobs:
         with:
           name: OWASP Dependency Check Report
           path: ${{github.workspace}}/reports
-      - name: Publish Payment commit image to Docker Hub
+      - name: Publish Payment Paypal commit image to Docker Hub
         if: ${{ github.event_name == 'push' }}
         uses: ./.github/actions/docker-publish
         with:
-          context: ./payment
-          image-name: yas-payment
+          context: ./payment-paypal
+          image-name: yas-payment-paypal
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           token: ${{ secrets.DOCKERHUB_TOKEN }}
