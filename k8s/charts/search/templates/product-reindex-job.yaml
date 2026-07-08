@@ -57,6 +57,11 @@ spec:
                 -X POST "$ELASTICSEARCH_URL/product/_delete_by_query?conflicts=proceed&refresh=true" \
                 --data '{"query":{"match_all":{}}}' >/dev/null || true
 
+              curl -fsS -u "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD" \
+                -H "Content-Type: application/json" \
+                -X PUT "$ELASTICSEARCH_URL/product/_settings" \
+                --data '{"index":{"number_of_replicas":0}}' >/dev/null || true
+
               indexed=0
               for id in $(seq 1 200); do
                 if body="$(curl -fsS "$PRODUCT_URL/$id" 2>/dev/null)"; then
