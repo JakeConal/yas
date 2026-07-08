@@ -11,11 +11,27 @@ backend:
     host: api.yas.local.com
     path: /media
   extraVolumes:
+    - name: media-images
+      persistentVolumeClaim:
+        claimName: media-images
     - name: media-application
       configMap:
         name: media-application-configmap
   extraVolumeMounts:
+    - name: media-images
+      mountPath: /images
     - name: media-application
       mountPath: /opt/yas/media
   extraApplicationConfigPaths:
     - /opt/yas/media/media-application.yaml
+  extraObjects:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: media-images
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
