@@ -16,10 +16,12 @@ spec:
                   namespace: dev
                   targetRevision: codex/gke-infra-argocd
                   host: storefront-dev.yas.local.com
+                  replicaCount: "1"
                 - env: staging
                   namespace: staging
                   targetRevision: codex/gke-infra-argocd
                   host: storefront-staging.yas.local.com
+                  replicaCount: "0"
           - list:
               elements:
                 - service: yas-configuration
@@ -100,6 +102,14 @@ spec:
               value: "{{ .host }}"
             - name: ui.ingress.host
               value: "{{ .host }}"
+            - name: backend.replicaCount
+              value: "{{ .replicaCount }}"
+            - name: ui.replicaCount
+              value: "{{ .replicaCount }}"
+            - name: reloader.reloader.enableHA
+              value: "true"
+            - name: reloader.reloader.deployment.replicas
+              value: "{{ .replicaCount }}"
             - name: mediaApplicationConfig.yas.publicUrl
               value: "http://{{ .host }}/media"
             - name: paymentPaypalApplicationConfig.yas.public.url
