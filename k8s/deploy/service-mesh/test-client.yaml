@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mesh-test-client
+  namespace: dev
+  labels:
+    app: mesh-test-client
+spec:
+  serviceAccountName: default
+  restartPolicy: Always
+  containers:
+    - name: curl
+      image: curlimages/curl:8.11.1
+      command:
+        - sleep
+        - "365d"
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 128Mi

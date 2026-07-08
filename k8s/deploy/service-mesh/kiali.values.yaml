@@ -1,0 +1,25 @@
+auth:
+  strategy: anonymous
+
+deployment:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 25m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+  service_type: ClusterIP
+
+external_services:
+  prometheus:
+    url: http://prometheus-kube-prometheus-prometheus.observability:9090
+  grafana:
+    enabled: true
+    in_cluster_url: http://prometheus-grafana.observability
+    url: http://grafana.yas.local.com
+  tracing:
+    enabled: true
+    in_cluster_url: http://tempo.observability:3200
+
+istio_namespace: istio-system
