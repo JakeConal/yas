@@ -38,5 +38,4 @@ backend:
     - name: storefront-bff-extra-config
       mountPath: /opt/yas/extra-config
   extraApplicationConfigPaths:
-    - /opt/yas/gateway-routes-config/gateway-routes-config.yaml
     - /opt/yas/extra-config/storefront-bff-extra-config.yaml
