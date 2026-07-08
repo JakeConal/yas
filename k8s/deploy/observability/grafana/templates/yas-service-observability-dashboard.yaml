@@ -39,7 +39,7 @@ spec:
           "title": "Open Tempo Explore",
           "tooltip": "Inspect traces in Tempo Explore",
           "type": "link",
-          "url": "/explore?left=%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22queryType%22:%22traceql%22,%22query%22:%22%7B%20resource.service.name%20!=%20%5C%22%5C%22%20%7D%22,%22limit%22:50,%22tableType%22:%22traces%22%7D%5D%7D"
+          "url": "/explore?left=%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22queryType%22:%22traceql%22,%22query%22:%22%7B%7D%22,%22limit%22:50,%22tableType%22:%22traces%22%7D%5D%7D"
         }
       ],
       "liveNow": false,
@@ -964,7 +964,7 @@ spec:
               },
               "filters": [],
               "limit": 50,
-              "query": "{ resource.service.name != \"\" }",
+              "query": "{}",
               "queryType": "traceql",
               "refId": "A",
               "tableType": "traces"
