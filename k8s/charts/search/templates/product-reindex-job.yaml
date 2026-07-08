@@ -1,0 +1,73 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: search-product-reindex
+  labels:
+    {{- include "search.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        {{- include "search.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: product-reindex
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: reindex
+          image: curlimages/curl:8.11.1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ELASTICSEARCH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: yas-elasticsearch-credentials-secret
+                  key: ELASTICSEARCH_USERNAME
+            - name: ELASTICSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: yas-elasticsearch-credentials-secret
+                  key: ELASTICSEARCH_PASSWORD
+            - name: PRODUCT_URL
+              value: http://product/product/storefront/products-es
+            - name: ELASTICSEARCH_URL
+              value: http://elasticsearch-es-http.elasticsearch:9200
+          command:
+            - sh
+            - -ec
+            - |
+              for i in $(seq 1 60); do
+                if curl -fsS "$PRODUCT_URL/1" >/dev/null &&
+                   curl -fsS -u "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD" "$ELASTICSEARCH_URL" >/dev/null; then
+                  break
+                fi
+                if [ "$i" = "60" ]; then
+                  echo "Timed out waiting for product service and Elasticsearch"
+                  exit 1
+                fi
+                sleep 5
+              done
+
+              curl -fsS -u "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD" \
+                -H "Content-Type: application/json" \
+                -X POST "$ELASTICSEARCH_URL/product/_delete_by_query?conflicts=proceed&refresh=true" \
+                --data '{"query":{"match_all":{}}}' >/dev/null || true
+
+              indexed=0
+              for id in $(seq 1 200); do
+                if body="$(curl -fsS "$PRODUCT_URL/$id" 2>/dev/null)"; then
+                  echo "$body" | curl -fsS -u "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD" \
+                    -H "Content-Type: application/json" \
+                    -X PUT "$ELASTICSEARCH_URL/product/_doc/$id" \
+                    --data-binary @- >/dev/null
+                  indexed=$((indexed + 1))
+                fi
+              done
+
+              curl -fsS -u "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD" \
+                -X POST "$ELASTICSEARCH_URL/product/_refresh" >/dev/null
+              echo "Indexed $indexed products into Elasticsearch"
