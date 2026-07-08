@@ -22,7 +22,7 @@ spec:
                   namespace: staging
                   targetRevision: codex/gke-infra-argocd
                   host: storefront-staging.yas.local.com
-                  replicaCount: "1"
+                  replicaCount: "0"
                   productReindexJobEnabled: "false"
           - list:
               elements:
