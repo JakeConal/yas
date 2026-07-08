@@ -44,6 +44,7 @@ spec:
     rating: {{ .Values.username }}
     tax: {{ .Values.username }}
     recommendation: {{ .Values.username }}
+    sampledata: {{ .Values.username }}
     webhook: {{ .Values.username }}
     grafana: {{ .Values.username }}
   patroni:

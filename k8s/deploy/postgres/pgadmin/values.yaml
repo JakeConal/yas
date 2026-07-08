@@ -23,10 +23,13 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 podAnnotations: {}
-podSecurityContext: {}
-# fsGroup: 2000
+podSecurityContext:
+  fsGroup: 5050
+  fsGroupChangePolicy: OnRootMismatch
 
-securityContext: {}
+securityContext:
+  runAsGroup: 5050
+  runAsUser: 5050
 # capabilities:
 
 #   drop:

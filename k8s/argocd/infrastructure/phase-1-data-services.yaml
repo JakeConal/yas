@@ -1,0 +1,156 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgres-cluster
+  namespace: argocd
+spec:
+  project: yas-infrastructure
+  source:
+    repoURL: https://github.com/JakeConal/yas.git
+    targetRevision: codex/gke-infra-argocd
+    path: k8s/deploy/postgres/postgresql
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: postgres
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pgadmin
+  namespace: argocd
+spec:
+  project: yas-infrastructure
+  source:
+    repoURL: https://github.com/JakeConal/yas.git
+    targetRevision: codex/gke-infra-argocd
+    path: k8s/deploy/postgres/pgadmin
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: postgres
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kafka-cluster
+  namespace: argocd
+spec:
+  project: yas-infrastructure
+  source:
+    repoURL: https://github.com/JakeConal/yas.git
+    targetRevision: codex/gke-infra-argocd
+    path: k8s/deploy/kafka/kafka-cluster
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kafka
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: akhq
+  namespace: argocd
+spec:
+  project: yas-infrastructure
+  sources:
+    - repoURL: https://akhq.io/
+      chart: akhq
+      targetRevision: 0.26.0
+      helm:
+        valueFiles:
+          - $values/k8s/deploy/kafka/akhq.values.yaml
+    - repoURL: https://github.com/JakeConal/yas.git
+      targetRevision: codex/gke-infra-argocd
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kafka
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: elasticsearch-cluster
+  namespace: argocd
+spec:
+  project: yas-infrastructure
+  source:
+    repoURL: https://github.com/JakeConal/yas.git
+    targetRevision: codex/gke-infra-argocd
+    path: k8s/deploy/elasticsearch/elasticsearch-cluster
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: elasticsearch
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: redis
+  namespace: argocd
+spec:
+  project: yas-infrastructure
+  source:
+    repoURL: https://charts.bitnami.com/bitnami
+    chart: redis
+    targetRevision: 27.0.14
+    helm:
+      valuesObject:
+        auth:
+          password: redis
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: redis
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: zookeeper
+  namespace: argocd
+spec:
+  project: yas-infrastructure
+  source:
+    repoURL: https://github.com/JakeConal/yas.git
+    targetRevision: codex/gke-infra-argocd
+    path: k8s/deploy/zookeeper
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: zookeeper
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

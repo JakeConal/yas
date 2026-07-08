@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: keycloak
+  namespace: argocd
+spec:
+  project: yas-infrastructure
+  source:
+    repoURL: https://github.com/JakeConal/yas.git
+    targetRevision: codex/gke-infra-argocd
+    path: k8s/deploy/keycloak/keycloak
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: keycloak
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

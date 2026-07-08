@@ -17,3 +17,61 @@ backend:
       mountPath: /opt/yas/payment
   extraApplicationConfigPaths:
     - /opt/yas/payment/payment-application.yaml
+  extraObjects:
+    - apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: payment-schema-compat
+        annotations:
+          argocd.argoproj.io/hook: PreSync
+          argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+      spec:
+        backoffLimit: 3
+        ttlSecondsAfterFinished: 600
+        template:
+          spec:
+            restartPolicy: Never
+            containers:
+              - name: migrate
+                image: postgres:15-alpine
+                imagePullPolicy: IfNotPresent
+                env:
+                  - name: PGPASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: yas-postgresql-credentials-secret
+                        key: POSTGRESQL_PASSWORD
+                  - name: POSTGRESQL_USERNAME
+                    valueFrom:
+                      secretKeyRef:
+                        name: yas-postgresql-credentials-secret
+                        key: POSTGRESQL_USERNAME
+                command:
+                  - sh
+                  - -ec
+                  - |
+                    psql -h postgresql.postgres -U "$POSTGRESQL_USERNAME" -d payment <<'SQL'
+                    ALTER TABLE IF EXISTS payment_provider
+                      ADD COLUMN IF NOT EXISTS is_enabled boolean;
+                    ALTER TABLE IF EXISTS payment_provider
+                      ALTER COLUMN enabled SET DEFAULT true;
+
+                    CREATE OR REPLACE FUNCTION sync_payment_provider_enabled()
+                    RETURNS trigger AS $$
+                    BEGIN
+                      IF NEW.enabled IS NULL AND NEW.is_enabled IS NOT NULL THEN
+                        NEW.enabled := NEW.is_enabled;
+                      END IF;
+                      RETURN NEW;
+                    END;
+                    $$ LANGUAGE plpgsql;
+
+                    DROP TRIGGER IF EXISTS trg_sync_payment_provider_enabled ON payment_provider;
+                    CREATE TRIGGER trg_sync_payment_provider_enabled
+                    BEFORE INSERT OR UPDATE ON payment_provider
+                    FOR EACH ROW EXECUTE FUNCTION sync_payment_provider_enabled();
+
+                    UPDATE payment_provider
+                    SET enabled = COALESCE(enabled, is_enabled, true),
+                        is_enabled = COALESCE(is_enabled, enabled, true);
+                    SQL

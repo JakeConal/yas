@@ -106,9 +106,28 @@ class UserAddressServiceTest {
     void getAddressDefault_whenAddressMissing_thenThrowsNotFoundException() {
         setAuthenticationName("user-1");
         when(userAddressRepository.findByUserIdAndIsActiveTrue("user-1")).thenReturn(Optional.empty());
+        when(userAddressRepository.findFirstByUserIdOrderByIdAsc("user-1")).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> userAddressService.getAddressDefault());
         verify(locationService, org.mockito.Mockito.never()).getAddressById(any());
+    }
+
+    @Test
+    void getAddressDefault_whenNoActiveAddress_thenActivatesFirstAddress() {
+        setAuthenticationName("user-1");
+        UserAddress firstAddress = userAddress(1L, "user-1", 20L, false);
+        AddressDetailVm addressDetail = addressDetail(20L, "Contact 2");
+
+        when(userAddressRepository.findByUserIdAndIsActiveTrue("user-1")).thenReturn(Optional.empty());
+        when(userAddressRepository.findFirstByUserIdOrderByIdAsc("user-1")).thenReturn(Optional.of(firstAddress));
+        when(userAddressRepository.save(firstAddress)).thenReturn(firstAddress);
+        when(locationService.getAddressById(20L)).thenReturn(addressDetail);
+
+        AddressDetailVm result = userAddressService.getAddressDefault();
+
+        assertEquals(addressDetail, result);
+        assertThat(firstAddress.getIsActive()).isTrue();
+        verify(userAddressRepository).save(firstAddress);
     }
 
     @Test
@@ -160,6 +179,25 @@ class UserAddressServiceTest {
 
         assertEquals(2L, result.id());
         assertEquals(false, result.isActive());
+    }
+
+    @Test
+    void createAddress_whenUserHasNoActiveAddress_thenMarksItActive() {
+        setAuthenticationName("user-1");
+        AddressPostVm addressPostVm = addressPostVm();
+        when(userAddressRepository.findAllByUserId("user-1")).thenReturn(
+            List.of(userAddress(1L, "user-1", 10L, false)));
+        when(locationService.createAddress(addressPostVm)).thenReturn(addressVm(100L));
+        when(userAddressRepository.save(any(UserAddress.class))).thenAnswer(invocation -> {
+            UserAddress saved = invocation.getArgument(0);
+            saved.setId(2L);
+            return saved;
+        });
+
+        UserAddressVm result = userAddressService.createAddress(addressPostVm);
+
+        assertEquals(2L, result.id());
+        assertEquals(true, result.isActive());
     }
 
     @Test

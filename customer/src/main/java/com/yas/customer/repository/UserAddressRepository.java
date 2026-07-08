@@ -11,4 +11,6 @@ public interface UserAddressRepository extends JpaRepository<UserAddress, Long> 
     UserAddress findOneByUserIdAndAddressId(String userId, Long id);
 
     Optional<UserAddress> findByUserIdAndIsActiveTrue(String userId);
+
+    Optional<UserAddress> findFirstByUserIdOrderByIdAsc(String userId);
 }
