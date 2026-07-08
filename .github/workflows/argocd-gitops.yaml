@@ -48,7 +48,7 @@ jobs:
              if [ "$ENV" == "staging" ]; then
                 git merge --strategy-option=theirs ${GITHUB_REF} --no-edit || true
              else
-                git merge --strategy-option=theirs main --no-edit || true
+                git merge --strategy-option=theirs origin/main --no-edit || true
              fi
           else
              echo "Branch $TARGET_BRANCH does not exist. Creating..."
