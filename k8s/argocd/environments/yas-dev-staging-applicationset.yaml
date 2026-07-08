@@ -17,11 +17,13 @@ spec:
                   targetRevision: codex/gke-infra-argocd
                   host: storefront-dev.yas.local.com
                   replicaCount: "1"
+                  productReindexJobEnabled: "true"
                 - env: staging
                   namespace: staging
                   targetRevision: codex/gke-infra-argocd
                   host: storefront-staging.yas.local.com
                   replicaCount: "0"
+                  productReindexJobEnabled: "false"
           - list:
               elements:
                 - service: yas-configuration
@@ -110,6 +112,8 @@ spec:
               value: "true"
             - name: reloader.reloader.deployment.replicas
               value: "{{ .replicaCount }}"
+            - name: productReindexJob.enabled
+              value: "{{ .productReindexJobEnabled }}"
             - name: mediaApplicationConfig.yas.publicUrl
               value: "http://{{ .host }}/media"
             - name: paymentPaypalApplicationConfig.yas.public.url

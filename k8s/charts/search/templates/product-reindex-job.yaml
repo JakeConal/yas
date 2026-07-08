@@ -1,3 +1,4 @@
+{{- if .Values.productReindexJob.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -76,3 +77,4 @@ spec:
               curl -fsS -u "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD" \
                 -X POST "$ELASTICSEARCH_URL/product/_refresh" >/dev/null
               echo "Indexed $indexed products into Elasticsearch"
+{{- end }}
