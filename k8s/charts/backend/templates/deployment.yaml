@@ -42,9 +42,31 @@ spec:
         - name: yas-configuration
           configMap:
             name: yas-configuration-configmap
+        {{- if .Values.opentelemetry.enabled }}
+        - name: opentelemetry-javaagent
+          emptyDir: {}
+        {{- end }}
         {{- with .Values.extraVolumes}}
           {{- toYaml . | nindent 8 }}
         {{- end }}
+      {{- if .Values.opentelemetry.enabled }}
+      initContainers:
+        - name: download-opentelemetry-javaagent
+          image: curlimages/curl:8.11.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+          command:
+            - sh
+            - -c
+            - >-
+              curl -fsSL
+              https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v{{ .Values.opentelemetry.javaAgentVersion }}/opentelemetry-javaagent.jar
+              -o {{ .Values.opentelemetry.javaAgentPath }}
+          volumeMounts:
+            - name: opentelemetry-javaagent
+              mountPath: {{ dir .Values.opentelemetry.javaAgentPath }}
+      {{- end }}
       containers:
         - name: {{ include "backend.fullname" . }}
           securityContext:
@@ -66,6 +88,28 @@ spec:
               {{- toYaml . | nindent 12 }}
             {{- end }}
           env:
+            {{- if .Values.opentelemetry.enabled }}
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: JAVA_TOOL_OPTIONS
+              value: "-javaagent:{{ .Values.opentelemetry.javaAgentPath }}"
+            - name: OTEL_SERVICE_NAME
+              value: {{ include "backend.fullname" . | quote }}
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "k8s.namespace.name=$(POD_NAMESPACE),deployment.environment=$(POD_NAMESPACE)"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.opentelemetry.collectorEndpoint | quote }}
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: {{ .Values.opentelemetry.protocol | quote }}
+            - name: OTEL_TRACES_EXPORTER
+              value: {{ .Values.opentelemetry.tracesExporter | quote }}
+            - name: OTEL_METRICS_EXPORTER
+              value: {{ .Values.opentelemetry.metricsExporter | quote }}
+            - name: OTEL_LOGS_EXPORTER
+              value: {{ .Values.opentelemetry.logsExporter | quote }}
+            {{- end }}
             - name: LOGGING_CONFIG
               value: {{ .Values.logbackXmlPath }}
             - name: SPRING_DATASOURCE_URL
@@ -83,6 +127,11 @@ spec:
           volumeMounts:
             - mountPath: /opt/yas/config
               name: yas-configuration
+            {{- if .Values.opentelemetry.enabled }}
+            - mountPath: {{ dir .Values.opentelemetry.javaAgentPath }}
+              name: opentelemetry-javaagent
+              readOnly: true
+            {{- end }}
             {{- with .Values.extraVolumeMounts }}
               {{- toYaml . | nindent 12 }}
             {{- end }}

@@ -46,6 +46,16 @@ metricPort: 8090
 databaseConnectionUrl: jdbc:postgresql://postgresql.postgres:5432
 databaseName: postgres
 
+opentelemetry:
+  enabled: true
+  javaAgentVersion: 2.12.0
+  javaAgentPath: /otel/opentelemetry-javaagent.jar
+  collectorEndpoint: http://opentelemetry-collector.observability:4318
+  protocol: http/protobuf
+  tracesExporter: otlp
+  metricsExporter: none
+  logsExporter: none
+
 deployment:
   annotations:
     reloader.stakater.com/search: "true"
