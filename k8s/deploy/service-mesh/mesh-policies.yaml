@@ -247,6 +247,38 @@ spec:
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
+  name: product-allow-metrics-scrape
+  namespace: dev
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: product
+  action: ALLOW
+  rules:
+    - to:
+        - operation:
+            ports:
+              - "8090"
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: search-allow-metrics-scrape
+  namespace: dev
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: search
+  action: ALLOW
+  rules:
+    - to:
+        - operation:
+            ports:
+              - "8090"
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
   name: search-allow-product-and-storefront-bff
   namespace: dev
 spec:
