@@ -22,7 +22,7 @@ spec:
                   namespace: staging
                   targetRevision: main
                   host: storefront-staging.yas.local.com
-                  replicaCount: "0"
+                  replicaCount: "1"
                   productReindexJobEnabled: "false"
           - list:
               elements:
