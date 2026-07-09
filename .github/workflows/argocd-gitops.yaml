@@ -70,6 +70,11 @@ jobs:
                       content = f.read()
                   new_content = re.sub(r'([ \t]*tag:).*', r'\g<1> ' + tag, content)
                   new_content = re.sub(r'ghcr\.io/nashtech-garage', docker_user, new_content)
+                  new_content = re.sub(
+                      r'asia-southeast1-docker\.pkg\.dev/encoded-antenna-501811-p4/yas-docker',
+                      docker_user,
+                      new_content,
+                  )
                   with open(val_file, 'w') as f:
                       f.write(new_content)
           print('Successfully updated tags to ' + tag + ' and repo to ' + docker_user)
