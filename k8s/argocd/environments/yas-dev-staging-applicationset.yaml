@@ -102,11 +102,11 @@ spec:
             - name: ui.ingress.host
               value: "{{ .host }}"
             - name: replicaCount
-              value: "{{ .replicaCount }}"
+              value: "{{ if eq .service \"sampledata\" }}0{{ else }}{{ .replicaCount }}{{ end }}"
             - name: backend.replicaCount
-              value: "{{ .replicaCount }}"
+              value: "{{ if eq .service \"sampledata\" }}0{{ else }}{{ .replicaCount }}{{ end }}"
             - name: ui.replicaCount
-              value: "{{ .replicaCount }}"
+              value: "{{ if eq .service \"sampledata\" }}0{{ else }}{{ .replicaCount }}{{ end }}"
             - name: ingress.host
               value: "api-{{ .env }}.yas.local.com"
             - name: reloader.reloader.enableHA
