@@ -283,6 +283,12 @@ searchApplicationConfig:
     username: ${ELASTICSEARCH_USERNAME}
     password: ${ELASTICSEARCH_PASSWORD}
 
+# Payment application config custom
+paymentApplicationConfig:
+  spring:
+    liquibase:
+      clear-checksums: true
+
 # Payment-paypal application config custom
 paymentPaypalApplicationConfig:
   yas:
