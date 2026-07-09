@@ -167,6 +167,8 @@ spec:
     matchLabels:
       app.kubernetes.io/name: tax
   portLevelMtls:
+    80:
+      mode: PERMISSIVE
     8090:
       mode: DISABLE
 ---
