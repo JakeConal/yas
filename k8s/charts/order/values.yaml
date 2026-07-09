@@ -1,7 +1,7 @@
 backend:
   image:
     repository: jakecoop17/yas-order
-    tag: latest
+    tag: schema-customerid-d03cc02e-20260708223316
 
   nameOverride: order
   fullnameOverride: order

@@ -1,6 +1,6 @@
 ui:
   image:
-    repository: jakecoop17/yas-storefront
+  repository: jakecoop17/yas-storefront
     tag: latest
   nameOverride: storefront-ui
   fullnameOverride: storefront-ui

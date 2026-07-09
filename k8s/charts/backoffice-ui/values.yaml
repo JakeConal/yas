@@ -1,6 +1,6 @@
 ui:
   image:
-    repository: jakecoop17/yas-backoffice
+  repository: jakecoop17/yas-backoffice
     tag: latest
   nameOverride: backoffice-ui
   fullnameOverride: backoffice-ui
