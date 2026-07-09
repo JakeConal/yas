@@ -21,6 +21,12 @@ storage:
 minio:
   enabled: true
 
+chunksCache:
+  allocatedMemory: 1024
+
+resultsCache:
+  allocatedMemory: 256
+
 monitoring:
   selfMonitoring:
     enabled: false
