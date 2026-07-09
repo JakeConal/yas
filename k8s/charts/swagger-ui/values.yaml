@@ -37,6 +37,7 @@ securityContext: {}
   # runAsUser: 1000
 
 baseUrl: /swagger-ui
+oauthClientId: swagger-ui
 urls: "[{ url: '/product/v3/api-docs', name: 'Product' },
       { url: '/media/v3/api-docs', name: 'Media' },
       { url: '/customer/v3/api-docs', name: 'Customer' },

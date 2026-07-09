@@ -940,6 +940,8 @@ spec:
         clientAuthenticatorType: client-secret
         redirectUris:
           - http://api.yas.local.com/*
+          - http://api-dev.yas.local.com/*
+          - http://api-staging.yas.local.com/*
           - http://localhost:8080/*
           - http://localhost:8081/*
           - http://localhost:8083/*
@@ -954,6 +956,8 @@ spec:
           - http://localhost:8093/*
         webOrigins:
           - http://api.yas.local.com
+          - http://api-dev.yas.local.com
+          - http://api-staging.yas.local.com
           - http://localhost:8080
           - http://localhost:8081
           - http://localhost:8083
