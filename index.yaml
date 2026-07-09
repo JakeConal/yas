@@ -11,6 +11,21 @@ entries:
     urls:
     - https://github.com/JakeConal/yas/releases/download/backend-0.1.0/backend-0.1.0.tgz
     version: 0.1.0
+  backoffice-bff:
+  - apiVersion: v2
+    appVersion: latest
+    created: "2026-07-09T07:49:08.687313661Z"
+    dependencies:
+    - name: backend
+      repository: file://../backend
+      version: 0.1.0
+    description: A Helm chart for Kubernetes
+    digest: 60b35944b484e5256621b919e541833a7af7efbaebfbd90253b307245e27b601
+    name: backoffice-bff
+    type: application
+    urls:
+    - https://github.com/JakeConal/yas/releases/download/backoffice-bff-0.1.0/backoffice-bff-0.1.0.tgz
+    version: 0.1.0
   backoffice-ui:
   - apiVersion: v2
     appVersion: latest
@@ -183,4 +198,4 @@ entries:
     urls:
     - https://github.com/JakeConal/yas/releases/download/yas-configuration-0.4.0/yas-configuration-0.4.0.tgz
     version: 0.4.0
-generated: "2026-07-09T01:46:24.599922389Z"
+generated: "2026-07-09T07:49:11.070301803Z"
