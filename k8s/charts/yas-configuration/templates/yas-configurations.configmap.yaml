@@ -19,7 +19,7 @@ metadata:
   annotations:
     reloader.stakater.com/match: "true"
 data:
-  gateway-routes-config.yaml: |
+  application-k8s.yaml: |
     {{- toYaml .Values.gatewayRoutesConfig | nindent 4 }}
 ---
 #Configmap for backoffice-bff extra
