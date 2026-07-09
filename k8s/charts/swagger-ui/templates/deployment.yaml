@@ -38,6 +38,8 @@ spec:
               value: {{ .Values.baseUrl }}
             - name: URLS
               value: {{ .Values.urls | quote }}
+            - name: OAUTH_CLIENT_ID
+              value: {{ .Values.oauthClientId | quote }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
