@@ -146,6 +146,17 @@ entries:
     urls:
     - https://github.com/JakeConal/yas/releases/download/storefront-ui-0.1.0/storefront-ui-0.1.0.tgz
     version: 0.1.0
+  swagger-ui:
+  - apiVersion: v2
+    appVersion: latest
+    created: "2026-07-09T01:46:24.223238025Z"
+    description: A Helm chart for Kubernetes
+    digest: c6a03b1e38103f35562a9b217305f55c5c51ec7dc2e453380dd723c462548e7c
+    name: swagger-ui
+    type: application
+    urls:
+    - https://github.com/JakeConal/yas/releases/download/swagger-ui-0.1.0/swagger-ui-0.1.0.tgz
+    version: 0.1.0
   ui:
   - apiVersion: v2
     appVersion: latest
@@ -172,4 +183,4 @@ entries:
     urls:
     - https://github.com/JakeConal/yas/releases/download/yas-configuration-0.4.0/yas-configuration-0.4.0.tgz
     version: 0.4.0
-generated: "2026-07-08T18:29:21.1136657Z"
+generated: "2026-07-09T01:46:24.599922389Z"
