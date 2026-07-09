@@ -1,6 +1,6 @@
 backend:
   image:
-    repository: ghcr.io/nashtech-garage/yas-rating
+    repository: jakecoop17/yas-rating
     tag: latest
 
   nameOverride: rating

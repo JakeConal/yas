@@ -1,6 +1,6 @@
 backend:
   image:
-    repository: asia-southeast1-docker.pkg.dev/encoded-antenna-501811-p4/yas-docker/yas-customer
+    repository: jakecoop17/yas-customer
     tag: default-address-b48cdc01-20260708222121
 
   nameOverride: customer

@@ -1,6 +1,6 @@
 backend:
   image:
-    repository: asia-southeast1-docker.pkg.dev/encoded-antenna-501811-p4/yas-docker/yas-order
+    repository: jakecoop17/yas-order
     tag: schema-customerid-d03cc02e-20260708223316
 
   nameOverride: order
