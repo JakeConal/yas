@@ -17,6 +17,8 @@ spec:
     matchLabels:
       app.kubernetes.io/name: cart
   portLevelMtls:
+    80:
+      mode: PERMISSIVE
     8090:
       mode: DISABLE
 ---
@@ -30,6 +32,8 @@ spec:
     matchLabels:
       app.kubernetes.io/name: customer
   portLevelMtls:
+    80:
+      mode: PERMISSIVE
     8090:
       mode: DISABLE
 ---
@@ -43,6 +47,8 @@ spec:
     matchLabels:
       app.kubernetes.io/name: inventory
   portLevelMtls:
+    80:
+      mode: PERMISSIVE
     8090:
       mode: DISABLE
 ---
@@ -56,6 +62,8 @@ spec:
     matchLabels:
       app.kubernetes.io/name: location
   portLevelMtls:
+    80:
+      mode: PERMISSIVE
     8090:
       mode: DISABLE
 ---
@@ -69,6 +77,8 @@ spec:
     matchLabels:
       app.kubernetes.io/name: media
   portLevelMtls:
+    80:
+      mode: PERMISSIVE
     8090:
       mode: DISABLE
 ---
@@ -82,6 +92,8 @@ spec:
     matchLabels:
       app.kubernetes.io/name: order
   portLevelMtls:
+    80:
+      mode: PERMISSIVE
     8090:
       mode: DISABLE
 ---
@@ -95,6 +107,8 @@ spec:
     matchLabels:
       app.kubernetes.io/name: payment
   portLevelMtls:
+    80:
+      mode: PERMISSIVE
     8090:
       mode: DISABLE
 ---
@@ -108,6 +122,8 @@ spec:
     matchLabels:
       app.kubernetes.io/name: product
   portLevelMtls:
+    80:
+      mode: PERMISSIVE
     8090:
       mode: DISABLE
 ---
@@ -121,6 +137,8 @@ spec:
     matchLabels:
       app.kubernetes.io/name: sampledata
   portLevelMtls:
+    80:
+      mode: PERMISSIVE
     8090:
       mode: DISABLE
 ---
@@ -134,6 +152,8 @@ spec:
     matchLabels:
       app.kubernetes.io/name: search
   portLevelMtls:
+    80:
+      mode: PERMISSIVE
     8090:
       mode: DISABLE
 ---
@@ -287,6 +307,13 @@ spec:
       app.kubernetes.io/name: search
   action: ALLOW
   rules:
+    - to:
+        - operation:
+            ports:
+              - "80"
+            paths:
+              - /search/v3/api-docs*
+              - /v3/api-docs*
     - from:
         - source:
             principals:
@@ -309,6 +336,13 @@ spec:
       app.kubernetes.io/name: product
   action: ALLOW
   rules:
+    - to:
+        - operation:
+            ports:
+              - "80"
+            paths:
+              - /product/v3/api-docs*
+              - /v3/api-docs*
     - from:
         - source:
             principals:
