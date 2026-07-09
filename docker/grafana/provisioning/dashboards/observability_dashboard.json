@@ -2531,16 +2531,15 @@
     "list": [
       {
         "current": {
-          "isNone": true,
-          "selected": false,
-          "text": "None",
-          "value": ""
+          "selected": true,
+          "text": "dev",
+          "value": "dev"
         },
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(service_namespace)",
+        "definition": "label_values(kube_deployment_status_replicas, namespace)",
         "hide": 0,
         "includeAll": false,
         "label": "Namespace",
@@ -2548,11 +2547,11 @@
         "name": "namespace",
         "options": [],
         "query": {
-          "query": "label_values(service_namespace)",
+          "query": "label_values(kube_deployment_status_replicas, namespace)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
-        "regex": "",
+        "regex": "/^(dev|staging)$/",
         "skipUrlSync": false,
         "sort": 0,
         "type": "query"
@@ -2560,14 +2559,14 @@
       {
         "current": {
           "selected": true,
-          "text": "storefront-bff-service",
-          "value": "storefront-bff-service"
+          "text": "payment",
+          "value": "payment"
         },
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(service_name)",
+        "definition": "label_values(kube_deployment_status_replicas{namespace=\"$namespace\"}, deployment)",
         "hide": 0,
         "includeAll": false,
         "label": "Service",
@@ -2575,7 +2574,7 @@
         "name": "service",
         "options": [],
         "query": {
-          "query": "label_values(service_name)",
+          "query": "label_values(kube_deployment_status_replicas{namespace=\"$namespace\"}, deployment)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
