@@ -20,7 +20,7 @@ spec:
                   productReindexJobEnabled: "true"
                 - env: staging
                   namespace: staging
-                  targetRevision: main
+                  targetRevision: env-staging
                   host: storefront-staging.yas.local.com
                   replicaCount: "1"
                   productReindexJobEnabled: "false"
