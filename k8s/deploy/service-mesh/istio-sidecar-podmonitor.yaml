@@ -15,5 +15,5 @@ spec:
       security.istio.io/tlsMode: istio
   podMetricsEndpoints:
     - path: /stats/prometheus
-      targetPort: 15020
+      port: http-envoy-prom
       interval: 15s
