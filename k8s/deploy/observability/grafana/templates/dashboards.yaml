@@ -6,7 +6,7 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
-  url: "https://raw.githubusercontent.com/JakeConal/yas/498d9ef768a57a0bcd2f1f261f17e1239d86f9b9/docker/grafana/provisioning/dashboards/observability_dashboard.json"
+  url: "https://raw.githubusercontent.com/JakeConal/yas/498d9ef73357bde28b930453dd0de63f212653b2/docker/grafana/provisioning/dashboards/observability_dashboard.json"
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
