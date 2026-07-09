@@ -112,7 +112,7 @@ spec:
     targetRevision: main
     path: k8s/deploy/service-mesh
     directory:
-      include: mesh-policies.yaml
+      include: "{mesh-policies.yaml,staging-mesh-policies.yaml}"
   destination:
     server: https://kubernetes.default.svc
     namespace: dev
