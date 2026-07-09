@@ -6,10 +6,13 @@ metadata:
     {{- include "swagger-ui.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   containers:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "swagger-ui.fullname" . }}:{{ .Values.service.port }}']
+      args:
+        - -qO-
+        - 'http://{{ include "swagger-ui.fullname" . }}:{{ .Values.service.port }}{{ .Values.baseUrl }}/'
   restartPolicy: Never
