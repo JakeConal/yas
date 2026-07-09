@@ -37,18 +37,16 @@ securityContext: {}
   # runAsUser: 1000
 
 baseUrl: /swagger-ui
-urls: "[{ url: 'http://api.yas.local.com/product/v3/api-docs', name: 'Product' },
-      { url: 'http://api.yas.local.com/media/v3/api-docs', name: 'Media' },
-      { url: 'http://api.yas.local.com/customer/v3/api-docs', name: 'Customer' }, 
-      { url: 'http://api.yas.local.com/cart/v3/api-docs', name: 'Cart'},
-      { url: 'http://api.yas.local.com/rating/v3/api-docs', name: 'Rating' }, 
-      { url: 'http://api.yas.local.com/order/v3/api-docs', name: 'Order'},
-      { url: 'http://api.yas.local.com/payment/v3/api-docs', name: 'Payment'},
-      { url: 'http://api.yas.local.com/location/v3/api-docs', name: 'Location'}, 
-      { url: 'http://api.yas.local.com/inventory/v3/api-docs', name: 'Inventory'},
-      { url: 'http://api.yas.local.com/tax/v3/api-docs', name: 'Tax' },
-      { url: 'http://api.yas.local.com/promotion/v3/api-docs', name: 'Promotion'},
-      { url: 'http://api.yas.local.com/search/v3/api-docs', name: 'Search'}]"
+urls: "[{ url: '/product/v3/api-docs', name: 'Product' },
+      { url: '/media/v3/api-docs', name: 'Media' },
+      { url: '/customer/v3/api-docs', name: 'Customer' },
+      { url: '/cart/v3/api-docs', name: 'Cart'},
+      { url: '/order/v3/api-docs', name: 'Order'},
+      { url: '/payment/v3/api-docs', name: 'Payment'},
+      { url: '/location/v3/api-docs', name: 'Location'},
+      { url: '/inventory/v3/api-docs', name: 'Inventory'},
+      { url: '/tax/v3/api-docs', name: 'Tax' },
+      { url: '/search/v3/api-docs', name: 'Search'}]"
 
 service:
   type: ClusterIP
@@ -70,6 +68,41 @@ ingress:
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
+
+apiDocsIngress:
+  enabled: true
+  pathType: Prefix
+  paths:
+    - path: /product
+      serviceName: product
+      servicePort: 80
+    - path: /media
+      serviceName: media
+      servicePort: 80
+    - path: /customer
+      serviceName: customer
+      servicePort: 80
+    - path: /cart
+      serviceName: cart
+      servicePort: 80
+    - path: /order
+      serviceName: order
+      servicePort: 80
+    - path: /payment
+      serviceName: payment
+      servicePort: 80
+    - path: /location
+      serviceName: location
+      servicePort: 80
+    - path: /inventory
+      serviceName: inventory
+      servicePort: 80
+    - path: /tax
+      serviceName: tax
+      servicePort: 80
+    - path: /search
+      serviceName: search
+      servicePort: 80
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
