@@ -1,0 +1,137 @@
+name: Direct Dev/Staging CD Without ArgoCD
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target Kubernetes namespace"
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+        default: dev
+      service_name:
+        description: "Helm chart/service name under k8s/charts"
+        required: true
+        type: choice
+        options:
+          - backoffice-bff
+          - backoffice-ui
+          - cart
+          - customer
+          - inventory
+          - location
+          - media
+          - order
+          - payment
+          - payment-paypal
+          - product
+          - sampledata
+          - search
+          - storefront-bff
+          - storefront-ui
+          - swagger-ui
+          - tax
+          - yas-configuration
+        default: product
+      image_tag:
+        description: "Docker image tag to deploy. Use latest or a commit SHA tag."
+        required: true
+        type: string
+        default: latest
+      confirm_direct_deploy:
+        description: "Type DEPLOY to confirm direct Helm deployment without ArgoCD"
+        required: true
+        type: string
+
+jobs:
+  deploy-direct:
+    name: Helm deploy directly to GKE
+    runs-on: self-hosted
+    if: ${{ inputs.confirm_direct_deploy == 'DEPLOY' }}
+    env:
+      ENVIRONMENT: ${{ inputs.environment }}
+      SERVICE: ${{ inputs.service_name }}
+      IMAGE_TAG: ${{ inputs.image_tag }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate local cluster tools
+        run: |
+          kubectl version --client
+          helm version --short
+          kubectl get namespace "$ENVIRONMENT" >/dev/null
+
+      - name: Resolve image repository and ingress hosts
+        run: |
+          set -euo pipefail
+
+          if [ -z "${DOCKERHUB_USERNAME:-}" ]; then
+            echo "DOCKERHUB_USERNAME secret is required for direct deployment."
+            exit 1
+          fi
+
+          IMAGE_REPOSITORY="${DOCKERHUB_USERNAME,,}/yas-${SERVICE}"
+          STOREFRONT_HOST="storefront-${ENVIRONMENT}.yas.local.com"
+          API_HOST="api-${ENVIRONMENT}.yas.local.com"
+
+          if [ "$SERVICE" = "backoffice-bff" ]; then
+            BACKEND_HOST="backoffice-${ENVIRONMENT}.yas.local.com"
+          else
+            BACKEND_HOST="$STOREFRONT_HOST"
+          fi
+
+          {
+            echo "IMAGE_REPOSITORY=$IMAGE_REPOSITORY"
+            echo "STOREFRONT_HOST=$STOREFRONT_HOST"
+            echo "API_HOST=$API_HOST"
+            echo "BACKEND_HOST=$BACKEND_HOST"
+          } >> "$GITHUB_ENV"
+
+      - name: Build Helm dependencies
+        run: |
+          helm dependency build "k8s/charts/$SERVICE"
+
+      - name: Deploy directly with Helm
+        run: |
+          set -euo pipefail
+
+          RELEASE="${ENVIRONMENT}-${SERVICE}"
+
+          echo "Deploying $RELEASE directly to namespace $ENVIRONMENT"
+          echo "Image: $IMAGE_REPOSITORY:$IMAGE_TAG"
+
+          helm upgrade --install "$RELEASE" "k8s/charts/$SERVICE" \
+            --namespace "$ENVIRONMENT" \
+            --create-namespace \
+            --set replicaCount=1 \
+            --set backend.replicaCount=1 \
+            --set ui.replicaCount=1 \
+            --set backend.image.repository="$IMAGE_REPOSITORY" \
+            --set backend.image.tag="$IMAGE_TAG" \
+            --set ui.image.repository="$IMAGE_REPOSITORY" \
+            --set ui.image.tag="$IMAGE_TAG" \
+            --set backend.ingress.host="$BACKEND_HOST" \
+            --set ui.ingress.host="$STOREFRONT_HOST" \
+            --set ingress.host="$API_HOST" \
+            --set productReindexJob.enabled=false \
+            --wait \
+            --timeout 10m
+
+      - name: Verify rollout
+        run: |
+          set -euo pipefail
+
+          if kubectl get deployment "$SERVICE" -n "$ENVIRONMENT" >/dev/null 2>&1; then
+            kubectl rollout status deployment/"$SERVICE" -n "$ENVIRONMENT" --timeout=5m
+          elif kubectl get deployment "${ENVIRONMENT}-${SERVICE}" -n "$ENVIRONMENT" >/dev/null 2>&1; then
+            kubectl rollout status deployment/"${ENVIRONMENT}-${SERVICE}" -n "$ENVIRONMENT" --timeout=5m
+          else
+            echo "No deployment found for $SERVICE. This can be normal for config-only charts."
+          fi
+
+          kubectl get pods -n "$ENVIRONMENT" -l app.kubernetes.io/name="$SERVICE" -o wide || true
+
