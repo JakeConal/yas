@@ -58,12 +58,86 @@ jobs:
       - name: Update Helm Values Image Tags
         env:
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
         run: |
           python3 -c "
-          import os, re
-          tag = 'latest'
+          import os, re, subprocess
+          tag = os.environ['IMAGE_TAG']
           docker_user = os.environ.get('DOCKER_USER') or 'nashtech-garage'
-          for chart in os.listdir('k8s/charts'):
+          before = os.environ.get('BEFORE_SHA', '')
+          after = os.environ.get('AFTER_SHA') or os.environ['IMAGE_TAG']
+          service_to_chart = {
+              'backoffice': 'backoffice-ui',
+              'backoffice-bff': 'backoffice-bff',
+              'cart': 'cart',
+              'customer': 'customer',
+              'inventory': 'inventory',
+              'location': 'location',
+              'media': 'media',
+              'order': 'order',
+              'payment': 'payment',
+              'payment-paypal': 'payment-paypal',
+              'product': 'product',
+              'promotion': 'promotion',
+              'rating': 'rating',
+              'recommendation': 'recommendation',
+              'sampledata': 'sampledata',
+              'search': 'search',
+              'storefront': 'storefront-ui',
+              'storefront-bff': 'storefront-bff',
+              'tax': 'tax',
+              'webhook': 'webhook',
+          }
+          workflow_to_chart = {
+              'backoffice-ci.yaml': 'backoffice-ui',
+              'backoffice-bff-ci.yaml': 'backoffice-bff',
+              'cart-ci.yaml': 'cart',
+              'customer-ci.yaml': 'customer',
+              'inventory-ci.yaml': 'inventory',
+              'location-ci.yaml': 'location',
+              'media-ci.yaml': 'media',
+              'order-ci.yaml': 'order',
+              'payment-ci.yaml': 'payment',
+              'payment-paypal-ci.yaml': 'payment-paypal',
+              'product-ci.yaml': 'product',
+              'promotion-ci.yaml': 'promotion',
+              'rating-ci.yaml': 'rating',
+              'recommendation-ci.yaml': 'recommendation',
+              'sampledata-ci.yaml': 'sampledata',
+              'search-ci.yaml': 'search',
+              'storefront-ci.yaml': 'storefront-ui',
+              'storefront-bff-ci.yaml': 'storefront-bff',
+              'tax-ci.yaml': 'tax',
+              'webhook-ci.yaml': 'webhook',
+          }
+          if before and set(before) != {'0'}:
+              diff_range = f'{before}..{after}'
+          else:
+              diff_range = f'{after}^..{after}'
+          changed_files = subprocess.check_output(
+              ['git', 'diff', '--name-only', diff_range],
+              text=True,
+          ).splitlines()
+          changed_charts = set()
+          for path in changed_files:
+              normalized = path.replace('\\\\', '/')
+              top_level = normalized.split('/', 1)[0]
+              chart = service_to_chart.get(top_level)
+              if chart:
+                  changed_charts.add(chart)
+                  continue
+              workflow_prefix = '.github/workflows/'
+              if normalized.startswith(workflow_prefix):
+                  workflow_name = normalized[len(workflow_prefix):]
+                  chart = workflow_to_chart.get(workflow_name)
+                  if chart:
+                      changed_charts.add(chart)
+          if not changed_charts:
+              print('No deployable service changes detected; skipping Helm values tag updates.')
+              raise SystemExit(0)
+          for chart in sorted(changed_charts):
               val_file = os.path.join('k8s/charts', chart, 'values.yaml')
               if os.path.isfile(val_file):
                   with open(val_file, 'r') as f:
@@ -74,10 +148,11 @@ jobs:
                       r'asia-southeast1-docker\.pkg\.dev/encoded-antenna-501811-p4/yas-docker',
                       docker_user,
                       new_content,
-                  )
+                   )
                   with open(val_file, 'w') as f:
                       f.write(new_content)
-          print('Successfully updated tags to ' + tag + ' and repo to ' + docker_user)
+          print('Successfully updated charts: ' + ', '.join(sorted(changed_charts)))
+          print('Applied image tag ' + tag + ' and repo namespace ' + docker_user)
           "
 
       - name: Commit and Push
