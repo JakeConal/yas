@@ -1,0 +1,137 @@
+name: Bootstrap Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Infrastructure scope to apply"
+        required: true
+        type: choice
+        options:
+          - all
+          - operators
+          - data-services
+          - observability
+          - access-services
+          - service-mesh
+        default: all
+      confirm_apply:
+        description: "Type APPLY to confirm infrastructure bootstrap"
+        required: true
+        type: string
+
+jobs:
+  bootstrap:
+    name: Apply ArgoCD infrastructure applications
+    runs-on: self-hosted
+    if: ${{ inputs.confirm_apply == 'APPLY' }}
+    env:
+      SCOPE: ${{ inputs.scope }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate cluster access
+        run: |
+          set -euo pipefail
+          kubectl version --client
+          kubectl get namespace argocd
+          kubectl get crd applications.argoproj.io applicationsets.argoproj.io
+
+      - name: Apply selected infrastructure manifests
+        run: |
+          set -euo pipefail
+
+          apply_manifest() {
+            local file="$1"
+            echo "Applying $file"
+            kubectl apply -f "$file"
+          }
+
+          case "$SCOPE" in
+            operators)
+              apply_manifest k8s/argocd/infrastructure/phase-0-operators.yaml
+              ;;
+            data-services)
+              apply_manifest k8s/argocd/infrastructure/phase-1-data-services.yaml
+              ;;
+            observability)
+              apply_manifest k8s/argocd/infrastructure/phase-2-observability.yaml
+              ;;
+            access-services)
+              apply_manifest k8s/argocd/infrastructure/phase-3-access-services.yaml
+              ;;
+            service-mesh)
+              apply_manifest k8s/argocd/service-mesh/istio-kiali.yaml
+              ;;
+            all)
+              apply_manifest k8s/argocd/infrastructure/phase-0-operators.yaml
+              apply_manifest k8s/argocd/infrastructure/phase-1-data-services.yaml
+              apply_manifest k8s/argocd/infrastructure/phase-2-observability.yaml
+              apply_manifest k8s/argocd/infrastructure/phase-3-access-services.yaml
+              apply_manifest k8s/argocd/service-mesh/istio-kiali.yaml
+              ;;
+            *)
+              echo "Unknown scope: $SCOPE"
+              exit 1
+              ;;
+          esac
+
+      - name: Wait for selected ArgoCD applications
+        run: |
+          set -euo pipefail
+
+          wait_app() {
+            local app="$1"
+            if ! kubectl get application "$app" -n argocd >/dev/null 2>&1; then
+              echo "Application $app does not exist for this scope, skipping."
+              return 0
+            fi
+
+            echo "Waiting for $app to become Synced and Healthy"
+            for i in $(seq 1 90); do
+              sync="$(kubectl get application "$app" -n argocd -o jsonpath='{.status.sync.status}' 2>/dev/null || true)"
+              health="$(kubectl get application "$app" -n argocd -o jsonpath='{.status.health.status}' 2>/dev/null || true)"
+              echo "$app sync=$sync health=$health"
+              if [ "$sync" = "Synced" ] && [ "$health" = "Healthy" ]; then
+                return 0
+              fi
+              sleep 20
+            done
+
+            echo "Timed out waiting for $app"
+            kubectl get application "$app" -n argocd -o wide || true
+            exit 1
+          }
+
+          wait_many() {
+            for app in "$@"; do
+              wait_app "$app"
+            done
+          }
+
+          case "$SCOPE" in
+            operators)
+              wait_many ingress-nginx postgres-operator strimzi-kafka-operator elastic-operator cert-manager opentelemetry-operator keycloak-operator
+              ;;
+            data-services)
+              wait_many postgres-cluster pgadmin kafka-cluster akhq elasticsearch-cluster redis zookeeper
+              ;;
+            observability)
+              wait_many loki tempo promtail prometheus grafana-operator grafana-resources opentelemetry-collector
+              ;;
+            access-services)
+              wait_many keycloak
+              ;;
+            service-mesh)
+              wait_many istio-base istiod kiali yas-mesh-policies
+              ;;
+            all)
+              wait_many ingress-nginx postgres-operator strimzi-kafka-operator elastic-operator cert-manager opentelemetry-operator keycloak-operator
+              wait_many postgres-cluster pgadmin kafka-cluster akhq elasticsearch-cluster redis zookeeper
+              wait_many loki tempo promtail prometheus grafana-operator grafana-resources opentelemetry-collector
+              wait_many keycloak
+              wait_many istio-base istiod kiali yas-mesh-policies
+              ;;
+          esac
+
