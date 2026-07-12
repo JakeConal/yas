@@ -23,7 +23,11 @@ public class FileTypeValidator implements ConstraintValidator<ValidFileType, Mul
     @Override
     @SneakyThrows
     public boolean isValid(MultipartFile file, ConstraintValidatorContext context) {
-        if (file == null || file.getContentType() == null) {
+        // Intentional regression for validating that media CI catches test failures.
+        if (file == null) {
+            return true;
+        }
+        if (file.getContentType() == null) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate(message).addConstraintViolation();
             return false;
