@@ -1,139 +1,99 @@
-name: Delete Infrastructure
+name: Delete Developer Infrastructure
 
 on:
   workflow_dispatch:
     inputs:
-      scope:
-        description: "Infrastructure scope to delete"
+      profile:
+        description: "Developer infrastructure to remove"
         required: true
         type: choice
         options:
-          - all
-          - service-mesh
-          - access-services
-          - observability
-          - data-services
-          - operators
-        default: all
+          - product
+          - full
+        default: product
+      delete_namespaces:
+        description: "Also delete infrastructure namespaces and persistent data"
+        required: true
+        type: boolean
+        default: false
       confirm_delete:
-        description: "Type DELETE_INFRASTRUCTURE to confirm destructive deletion"
+        description: "Type DELETE_DEVELOPER_INFRA to confirm"
         required: true
         type: string
 
 jobs:
   delete:
-    name: Delete ArgoCD infrastructure applications
+    name: Uninstall directly managed infrastructure
     runs-on: self-hosted
-    if: ${{ inputs.confirm_delete == 'DELETE_INFRASTRUCTURE' }}
+    if: ${{ inputs.confirm_delete == 'DELETE_DEVELOPER_INFRA' }}
     env:
-      SCOPE: ${{ inputs.scope }}
+      PROFILE: ${{ inputs.profile }}
+      DELETE_NAMESPACES: ${{ inputs.delete_namespaces }}
     steps:
-      - name: Validate cluster access
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate tools and cluster access
+        shell: bash
         run: |
           set -euo pipefail
           kubectl version --client
-          kubectl get namespace argocd
-          kubectl get crd applications.argoproj.io
+          helm version
 
-      - name: Delete selected infrastructure applications
+      - name: Uninstall application dependencies
+        shell: bash
         run: |
           set -euo pipefail
-
-          delete_app() {
-            local app="$1"
-            if ! kubectl get application "$app" -n argocd >/dev/null 2>&1; then
-              echo "Application $app not found, skipping."
-              return 0
+          uninstall_release() {
+            local release="$1"
+            local namespace="$2"
+            if helm status "$release" -n "$namespace" >/dev/null 2>&1; then
+              helm uninstall "$release" -n "$namespace" --wait --timeout 10m
+            else
+              echo "Helm release $namespace/$release does not exist; skipping."
             fi
-
-            echo "Deleting $app and pruning managed resources"
-            kubectl patch application "$app" -n argocd --type merge \
-              -p '{"metadata":{"finalizers":["resources-finalizer.argocd.argoproj.io"]}}'
-            kubectl delete application "$app" -n argocd --wait=false
           }
 
-          delete_many() {
-            for app in "$@"; do
-              delete_app "$app"
-            done
-          }
+          if [ "$PROFILE" = "full" ]; then
+            uninstall_release keycloak keycloak
+            kubectl delete -n keycloak -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/26.0.2/kubernetes/kubernetes.yml --ignore-not-found=true || true
+            uninstall_release zookeeper zookeeper
+            uninstall_release redis redis
+          fi
 
-          case "$SCOPE" in
-            service-mesh)
-              delete_many yas-mesh-policies kiali istiod istio-base
-              ;;
-            access-services)
-              delete_many keycloak
-              ;;
-            observability)
-              delete_many opentelemetry-collector grafana-resources grafana-operator prometheus promtail tempo loki
-              ;;
-            data-services)
-              delete_many zookeeper redis elasticsearch-cluster akhq kafka-cluster pgadmin postgres-cluster
-              ;;
-            operators)
-              delete_many keycloak-operator opentelemetry-operator cert-manager elastic-operator strimzi-kafka-operator postgres-operator ingress-nginx
-              ;;
-            all)
-              delete_many yas-mesh-policies kiali istiod istio-base
-              delete_many keycloak
-              delete_many opentelemetry-collector grafana-resources grafana-operator prometheus promtail tempo loki
-              delete_many zookeeper redis elasticsearch-cluster akhq kafka-cluster pgadmin postgres-cluster
-              delete_many keycloak-operator opentelemetry-operator cert-manager elastic-operator strimzi-kafka-operator postgres-operator ingress-nginx
-              ;;
-            *)
-              echo "Unknown scope: $SCOPE"
-              exit 1
-              ;;
-          esac
+          uninstall_release elasticsearch-cluster elasticsearch
+          uninstall_release kafka-cluster kafka
+          uninstall_release postgres-cluster postgres
 
-      - name: Wait for application deletion
+      - name: Uninstall operators
+        shell: bash
         run: |
           set -euo pipefail
-
-          wait_deleted() {
-            local app="$1"
-            for i in $(seq 1 60); do
-              if ! kubectl get application "$app" -n argocd >/dev/null 2>&1; then
-                echo "$app deleted"
-                return 0
-              fi
-              echo "Waiting for $app deletion"
-              sleep 10
-            done
-            echo "Timed out waiting for $app deletion"
-            kubectl get application "$app" -n argocd -o wide || true
-            exit 1
+          uninstall_release() {
+            local release="$1"
+            local namespace="$2"
+            if helm status "$release" -n "$namespace" >/dev/null 2>&1; then
+              helm uninstall "$release" -n "$namespace" --wait --timeout 10m
+            else
+              echo "Helm release $namespace/$release does not exist; skipping."
+            fi
           }
 
-          wait_many_deleted() {
-            for app in "$@"; do
-              wait_deleted "$app"
-            done
-          }
+          uninstall_release elastic-operator elasticsearch
+          uninstall_release strimzi-kafka-operator kafka
+          uninstall_release postgres-operator postgres
 
-          case "$SCOPE" in
-            service-mesh)
-              wait_many_deleted yas-mesh-policies kiali istiod istio-base
-              ;;
-            access-services)
-              wait_many_deleted keycloak
-              ;;
-            observability)
-              wait_many_deleted opentelemetry-collector grafana-resources grafana-operator prometheus promtail tempo loki
-              ;;
-            data-services)
-              wait_many_deleted zookeeper redis elasticsearch-cluster akhq kafka-cluster pgadmin postgres-cluster
-              ;;
-            operators)
-              wait_many_deleted keycloak-operator opentelemetry-operator cert-manager elastic-operator strimzi-kafka-operator postgres-operator ingress-nginx
-              ;;
-            all)
-              wait_many_deleted yas-mesh-policies kiali istiod istio-base
-              wait_many_deleted keycloak
-              wait_many_deleted opentelemetry-collector grafana-resources grafana-operator prometheus promtail tempo loki
-              wait_many_deleted zookeeper redis elasticsearch-cluster akhq kafka-cluster pgadmin postgres-cluster
-              wait_many_deleted keycloak-operator opentelemetry-operator cert-manager elastic-operator strimzi-kafka-operator postgres-operator ingress-nginx
-              ;;
-          esac
+      - name: Optionally delete namespaces and persistent data
+        if: ${{ inputs.delete_namespaces }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          namespaces=(postgres kafka elasticsearch)
+          if [ "$PROFILE" = "full" ]; then
+            namespaces+=(redis zookeeper keycloak)
+          fi
+          kubectl delete namespace "${namespaces[@]}" --ignore-not-found=true --wait=false
 
+      - name: Show remaining releases
+        shell: bash
+        run: helm list --all-namespaces

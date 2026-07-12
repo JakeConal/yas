@@ -1,137 +1,100 @@
-name: Bootstrap Infrastructure
+name: Bootstrap Developer Infrastructure
 
 on:
   workflow_dispatch:
     inputs:
-      scope:
-        description: "Infrastructure scope to apply"
+      profile:
+        description: "Infrastructure required by the developer build"
         required: true
         type: choice
         options:
-          - all
-          - operators
-          - data-services
-          - observability
-          - access-services
-          - service-mesh
-        default: all
+          - product
+          - full
+        default: product
       confirm_apply:
-        description: "Type APPLY to confirm infrastructure bootstrap"
+        description: "Type APPLY to confirm"
         required: true
         type: string
 
 jobs:
   bootstrap:
-    name: Apply ArgoCD infrastructure applications
+    name: Install infrastructure directly with Helm
     runs-on: self-hosted
     if: ${{ inputs.confirm_apply == 'APPLY' }}
     env:
-      SCOPE: ${{ inputs.scope }}
+      PROFILE: ${{ inputs.profile }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate cluster access
+      - name: Validate tools and cluster access
+        shell: bash
         run: |
           set -euo pipefail
           kubectl version --client
-          kubectl get namespace argocd
-          kubectl get crd applications.argoproj.io applicationsets.argoproj.io
+          helm version
+          kubectl auth can-i create namespaces | grep -q '^yes$'
 
-      - name: Apply selected infrastructure manifests
+      - name: Configure Helm repositories
+        shell: bash
         run: |
           set -euo pipefail
+          helm repo add postgres-operator https://opensource.zalando.com/postgres-operator/charts/postgres-operator
+          helm repo add strimzi https://strimzi.io/charts/
+          helm repo add elastic https://helm.elastic.co
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo update
 
-          apply_manifest() {
-            local file="$1"
-            echo "Applying $file"
-            kubectl apply -f "$file"
-          }
-
-          case "$SCOPE" in
-            operators)
-              apply_manifest k8s/argocd/infrastructure/phase-0-operators.yaml
-              ;;
-            data-services)
-              apply_manifest k8s/argocd/infrastructure/phase-1-data-services.yaml
-              ;;
-            observability)
-              apply_manifest k8s/argocd/infrastructure/phase-2-observability.yaml
-              ;;
-            access-services)
-              apply_manifest k8s/argocd/infrastructure/phase-3-access-services.yaml
-              ;;
-            service-mesh)
-              apply_manifest k8s/argocd/service-mesh/istio-kiali.yaml
-              ;;
-            all)
-              apply_manifest k8s/argocd/infrastructure/phase-0-operators.yaml
-              apply_manifest k8s/argocd/infrastructure/phase-1-data-services.yaml
-              apply_manifest k8s/argocd/infrastructure/phase-2-observability.yaml
-              apply_manifest k8s/argocd/infrastructure/phase-3-access-services.yaml
-              apply_manifest k8s/argocd/service-mesh/istio-kiali.yaml
-              ;;
-            *)
-              echo "Unknown scope: $SCOPE"
-              exit 1
-              ;;
-          esac
-
-      - name: Wait for selected ArgoCD applications
+      - name: Install operators directly
+        shell: bash
         run: |
           set -euo pipefail
+          helm upgrade --install postgres-operator postgres-operator/postgres-operator \
+            --version 1.14.0 --namespace postgres --create-namespace --wait --timeout 10m
+          helm upgrade --install strimzi-kafka-operator strimzi/strimzi-kafka-operator \
+            --version 0.49.0 --namespace kafka --create-namespace --wait --timeout 10m
+          helm upgrade --install elastic-operator elastic/eck-operator \
+            --version 3.1.0 --namespace elasticsearch --create-namespace --wait --timeout 10m
 
-          wait_app() {
-            local app="$1"
-            if ! kubectl get application "$app" -n argocd >/dev/null 2>&1; then
-              echo "Application $app does not exist for this scope, skipping."
-              return 0
-            fi
+      - name: Install Product dependencies directly
+        shell: bash
+        run: |
+          set -euo pipefail
+          helm upgrade --install postgres-cluster k8s/deploy/postgres/postgresql \
+            --namespace postgres --create-namespace --wait --timeout 15m
+          helm upgrade --install kafka-cluster k8s/deploy/kafka/kafka-cluster \
+            --namespace kafka --create-namespace --wait --timeout 20m
+          helm upgrade --install elasticsearch-cluster k8s/deploy/elasticsearch/elasticsearch-cluster \
+            --namespace elasticsearch --create-namespace --wait --timeout 20m
 
-            echo "Waiting for $app to become Synced and Healthy"
-            for i in $(seq 1 90); do
-              sync="$(kubectl get application "$app" -n argocd -o jsonpath='{.status.sync.status}' 2>/dev/null || true)"
-              health="$(kubectl get application "$app" -n argocd -o jsonpath='{.status.health.status}' 2>/dev/null || true)"
-              echo "$app sync=$sync health=$health"
-              if [ "$sync" = "Synced" ] && [ "$health" = "Healthy" ]; then
-                return 0
-              fi
-              sleep 20
-            done
+      - name: Install full-system dependencies directly
+        if: ${{ inputs.profile == 'full' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          helm upgrade --install redis bitnami/redis --version 27.0.14 \
+            --namespace redis --create-namespace --set auth.password=redis --wait --timeout 15m
+          helm upgrade --install zookeeper k8s/deploy/zookeeper \
+            --namespace zookeeper --create-namespace --wait --timeout 15m
 
-            echo "Timed out waiting for $app"
-            kubectl get application "$app" -n argocd -o wide || true
-            exit 1
-          }
+          kubectl create namespace keycloak --dry-run=client -o yaml | kubectl apply -f -
+          kubectl apply -n keycloak -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/26.0.2/kubernetes/keycloaks.k8s.keycloak.org-v1.yml
+          kubectl apply -n keycloak -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/26.0.2/kubernetes/keycloakrealmimports.k8s.keycloak.org-v1.yml
+          kubectl apply -n keycloak -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/26.0.2/kubernetes/kubernetes.yml
+          kubectl rollout status deployment/keycloak-operator -n keycloak --timeout=10m
+          helm upgrade --install keycloak k8s/deploy/keycloak/keycloak \
+            --namespace keycloak --create-namespace --wait --timeout 15m
 
-          wait_many() {
-            for app in "$@"; do
-              wait_app "$app"
-            done
-          }
-
-          case "$SCOPE" in
-            operators)
-              wait_many ingress-nginx postgres-operator strimzi-kafka-operator elastic-operator cert-manager opentelemetry-operator keycloak-operator
-              ;;
-            data-services)
-              wait_many postgres-cluster pgadmin kafka-cluster akhq elasticsearch-cluster redis zookeeper
-              ;;
-            observability)
-              wait_many loki tempo promtail prometheus grafana-operator grafana-resources opentelemetry-collector
-              ;;
-            access-services)
-              wait_many keycloak
-              ;;
-            service-mesh)
-              wait_many istio-base istiod kiali yas-mesh-policies
-              ;;
-            all)
-              wait_many ingress-nginx postgres-operator strimzi-kafka-operator elastic-operator cert-manager opentelemetry-operator keycloak-operator
-              wait_many postgres-cluster pgadmin kafka-cluster akhq elasticsearch-cluster redis zookeeper
-              wait_many loki tempo promtail prometheus grafana-operator grafana-resources opentelemetry-collector
-              wait_many keycloak
-              wait_many istio-base istiod kiali yas-mesh-policies
-              ;;
-          esac
-
+      - name: Show installed infrastructure
+        shell: bash
+        run: |
+          set -euo pipefail
+          helm list --all-namespaces
+          kubectl get pods -n postgres
+          kubectl get pods -n kafka
+          kubectl get pods -n elasticsearch
+          if [ "$PROFILE" = "full" ]; then
+            kubectl get pods -n redis
+            kubectl get pods -n zookeeper
+            kubectl get pods -n keycloak
+          fi
