@@ -299,7 +299,9 @@ jobs:
           HOST: ${{ steps.preview.outputs.host }}
         run: |
           set -euo pipefail
-          kubectl rollout status deployment --all -n "$NAMESPACE" --timeout=10m
+          while IFS= read -r deployment; do
+            kubectl rollout status "$deployment" -n "$NAMESPACE" --timeout=10m
+          done < <(kubectl get deployment -n "$NAMESPACE" -o name)
           kubectl get pods,svc,ingress -n "$NAMESPACE"
           {
             echo "## Developer preview is ready"
