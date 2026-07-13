@@ -139,6 +139,33 @@ spec:
 
         - repoURL: https://github.com/JakeConal/yas.git
           targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/promotion
+          helm:
+            releaseName: "{{ .env }}-promotion"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/rating
+          helm:
+            releaseName: "{{ .env }}-rating"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/recommendation
+          helm:
+            releaseName: "{{ .env }}-recommendation"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
           path: k8s/charts/sampledata
           helm:
             releaseName: "{{ .env }}-sampledata"
@@ -162,6 +189,15 @@ spec:
           path: k8s/charts/tax
           helm:
             releaseName: "{{ .env }}-tax"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/webhook
+          helm:
+            releaseName: "{{ .env }}-webhook"
             parameters:
               - name: backend.replicaCount
                 value: "{{ .replicaCount }}"

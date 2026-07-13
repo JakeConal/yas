@@ -35,11 +35,17 @@ kubectl get pods -n staging
 
 ## Deployment flow
 
-1. A commit on `main` builds only changed service images.
-2. `.github/workflows/argocd-gitops.yaml` writes those image tags to `env-dev`.
-3. ArgoCD refreshes `yas-dev` and syncs all sources as one Application.
-4. Only Deployments with changed image tags create new ReplicaSets and pods.
-5. A release tag follows the same flow with `env-staging` and `yas-staging`.
+1. A commit on `main` triggers CI only for services whose source or shared build files changed.
+2. Each service runs tests, builds the application, and publishes an immutable SHA image.
+3. Only after that service CI succeeds, its `Deploy` job calls
+   `.github/workflows/argocd-gitops.yaml` to update the matching chart on `env-dev`.
+4. ArgoCD refreshes `yas-dev`; only Deployments whose rendered image changed create new
+   ReplicaSets and pods.
+5. A `v*` release tag publishes both SHA and release-tag images, then follows the same
+   per-service flow through `env-staging` and `yas-staging`.
+
+If tests, build, or image publishing fails, the `Deploy` job is skipped and the environment
+branch remains on its last known-good image.
 
 Environment hosts:
 

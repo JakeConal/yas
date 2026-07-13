@@ -1,162 +1,124 @@
-name: ArgoCD GitOps Updater
+name: ArgoCD GitOps Service Deploy
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - 'v*'
+  workflow_call:
+    inputs:
+      chart:
+        description: Helm chart directory name under k8s/charts
+        required: true
+        type: string
+      image-name:
+        description: Docker Hub image name without the namespace
+        required: true
+        type: string
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+
+permissions:
+  contents: write
 
 jobs:
   update-gitops:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout source revision
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch all history for branches and tags
+          fetch-depth: 0
 
-      - name: Determine Environment and Setup Branch
-        id: env_setup
+      - name: Select deployment environment
+        shell: bash
         run: |
-          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-             ENV="staging"
-             TARGET_BRANCH="env-staging"
-             TAG="${GITHUB_REF_NAME}"
-             echo "Triggered by tag. Environment: staging. Tag: $TAG"
+          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            echo "TARGET_BRANCH=env-dev" >> "${GITHUB_ENV}"
+            echo "IMAGE_TAG=${GITHUB_SHA}" >> "${GITHUB_ENV}"
+          elif [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            echo "TARGET_BRANCH=env-staging" >> "${GITHUB_ENV}"
+            echo "IMAGE_TAG=${GITHUB_REF_NAME}" >> "${GITHUB_ENV}"
           else
-             ENV="dev"
-             TARGET_BRANCH="env-dev"
-             TAG="${GITHUB_SHA}"
-             echo "Triggered by push to main. Environment: dev. Tag: $TAG"
-          fi
-          
-          echo "ENV=$ENV" >> $GITHUB_ENV
-          echo "TARGET_BRANCH=$TARGET_BRANCH" >> $GITHUB_ENV
-          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
-          
-          # Git config
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Check if target branch exists on remote, if not create it
-          if git ls-remote --exit-code --heads origin $TARGET_BRANCH; then
-             echo "Branch $TARGET_BRANCH exists. Checking out..."
-             git checkout $TARGET_BRANCH
-             
-             # If staging, we want to bring the exact code from the tag to the staging branch
-             if [ "$ENV" == "staging" ]; then
-                git merge --strategy-option=theirs ${GITHUB_REF} --no-edit || true
-             else
-                git merge --strategy-option=theirs origin/main --no-edit || true
-             fi
-          else
-             echo "Branch $TARGET_BRANCH does not exist. Creating..."
-             git checkout -b $TARGET_BRANCH
+            echo "Unsupported deployment ref: ${GITHUB_REF}" >&2
+            exit 1
           fi
 
-      - name: Update Helm Values Image Tags
+      - name: Update service chart after successful image publish
+        shell: bash
         env:
+          CHART: ${{ inputs.chart }}
+          IMAGE_NAME: ${{ inputs.image-name }}
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
-          IMAGE_TAG: ${{ env.IMAGE_TAG }}
-          BEFORE_SHA: ${{ github.event.before }}
-          AFTER_SHA: ${{ github.sha }}
         run: |
-          python3 -c "
-          import os, re, subprocess
-          tag = os.environ['IMAGE_TAG']
-          docker_user = os.environ.get('DOCKER_USER') or 'nashtech-garage'
-          before = os.environ.get('BEFORE_SHA', '')
-          after = os.environ.get('AFTER_SHA') or os.environ['IMAGE_TAG']
-          service_to_chart = {
-              'backoffice': 'backoffice-ui',
-              'backoffice-bff': 'backoffice-bff',
-              'cart': 'cart',
-              'customer': 'customer',
-              'inventory': 'inventory',
-              'location': 'location',
-              'media': 'media',
-              'order': 'order',
-              'payment': 'payment',
-              'payment-paypal': 'payment-paypal',
-              'product': 'product',
-              'promotion': 'promotion',
-              'rating': 'rating',
-              'recommendation': 'recommendation',
-              'sampledata': 'sampledata',
-              'search': 'search',
-              'storefront': 'storefront-ui',
-              'storefront-bff': 'storefront-bff',
-              'tax': 'tax',
-              'webhook': 'webhook',
-          }
-          workflow_to_chart = {
-              'backoffice-ci.yaml': 'backoffice-ui',
-              'backoffice-bff-ci.yaml': 'backoffice-bff',
-              'cart-ci.yaml': 'cart',
-              'customer-ci.yaml': 'customer',
-              'inventory-ci.yaml': 'inventory',
-              'location-ci.yaml': 'location',
-              'media-ci.yaml': 'media',
-              'order-ci.yaml': 'order',
-              'payment-ci.yaml': 'payment',
-              'payment-paypal-ci.yaml': 'payment-paypal',
-              'product-ci.yaml': 'product',
-              'promotion-ci.yaml': 'promotion',
-              'rating-ci.yaml': 'rating',
-              'recommendation-ci.yaml': 'recommendation',
-              'sampledata-ci.yaml': 'sampledata',
-              'search-ci.yaml': 'search',
-              'storefront-ci.yaml': 'storefront-ui',
-              'storefront-bff-ci.yaml': 'storefront-bff',
-              'tax-ci.yaml': 'tax',
-              'webhook-ci.yaml': 'webhook',
-          }
-          if before and set(before) != {'0'}:
-              diff_range = f'{before}..{after}'
-          else:
-              diff_range = f'{after}^..{after}'
-          changed_files = subprocess.check_output(
-              ['git', 'diff', '--name-only', diff_range],
-              text=True,
-          ).splitlines()
-          changed_charts = set()
-          for path in changed_files:
-              normalized = path.replace('\\\\', '/')
-              top_level = normalized.split('/', 1)[0]
-              chart = service_to_chart.get(top_level)
-              if chart:
-                  changed_charts.add(chart)
-                  continue
-              workflow_prefix = '.github/workflows/'
-              if normalized.startswith(workflow_prefix):
-                  workflow_name = normalized[len(workflow_prefix):]
-                  chart = workflow_to_chart.get(workflow_name)
-                  if chart:
-                      changed_charts.add(chart)
-          if not changed_charts:
-              print('No deployable service changes detected; skipping Helm values tag updates.')
-              raise SystemExit(0)
-          for chart in sorted(changed_charts):
-              val_file = os.path.join('k8s/charts', chart, 'values.yaml')
-              if os.path.isfile(val_file):
-                  with open(val_file, 'r') as f:
-                      content = f.read()
-                  new_content = re.sub(r'([ \t]*tag:).*', r'\g<1> ' + tag, content)
-                  new_content = re.sub(r'ghcr\.io/nashtech-garage', docker_user, new_content)
-                  new_content = re.sub(
-                      r'asia-southeast1-docker\.pkg\.dev/encoded-antenna-501811-p4/yas-docker',
-                      docker_user,
-                      new_content,
-                   )
-                  with open(val_file, 'w') as f:
-                      f.write(new_content)
-          print('Successfully updated charts: ' + ', '.join(sorted(changed_charts)))
-          print('Applied image tag ' + tag + ' and repo namespace ' + docker_user)
-          "
+          set -euo pipefail
 
-      - name: Commit and Push
-        run: |
-          git add k8s/charts/*/values.yaml
-          git commit -m "[skip ci] ArgoCD GitOps: Update $ENV image tags to $IMAGE_TAG" || true
-          git push origin $TARGET_BRANCH
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "${TARGET_BRANCH}"
+            git checkout -B gitops-update "origin/${TARGET_BRANCH}"
+
+            values_file="k8s/charts/${CHART}/values.yaml"
+            current_tag="$(awk '$1 == "tag:" {print $2; exit}' "${values_file}")"
+            current_tag="${current_tag%\"}"
+            current_tag="${current_tag#\"}"
+            current_tag="${current_tag%\'}"
+            current_tag="${current_tag#\'}"
+            if git rev-parse --verify "${current_tag}^{commit}" >/dev/null 2>&1 &&
+               git merge-base --is-ancestor "${GITHUB_SHA}" "${current_tag}^{commit}"; then
+              echo "Skipping stale or duplicate ${CHART} deployment; ${current_tag} is already newer or equal."
+              exit 0
+            fi
+
+            # Copy only this service's chart from the tested source revision.
+            git checkout "${GITHUB_SHA}" -- "k8s/charts/${CHART}"
+
+            python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          chart = os.environ["CHART"]
+          image_name = os.environ["IMAGE_NAME"]
+          docker_user = os.environ["DOCKER_USER"].lower()
+          image_tag = os.environ["IMAGE_TAG"]
+          values_file = Path("k8s/charts") / chart / "values.yaml"
+          content = values_file.read_text()
+
+          content, repository_updates = re.subn(
+              r"^(\s+repository:)\s*.*$",
+              rf"\1 {docker_user}/{image_name}",
+              content,
+              count=1,
+              flags=re.MULTILINE,
+          )
+          content, tag_updates = re.subn(
+              r"^(\s+tag:)\s*.*$",
+              rf"\1 {image_tag}",
+              content,
+              count=1,
+              flags=re.MULTILINE,
+          )
+          if repository_updates != 1 or tag_updates != 1:
+              raise SystemExit(f"Could not update image coordinates in {values_file}")
+
+          values_file.write_text(content)
+          PY
+
+            git add "k8s/charts/${CHART}"
+            if git diff --cached --quiet; then
+              echo "${CHART} already points to ${IMAGE_TAG}; nothing to deploy."
+              exit 0
+            fi
+
+            git commit -m "[skip ci] deploy ${CHART} ${IMAGE_TAG} to ${TARGET_BRANCH}"
+            if git push origin "HEAD:${TARGET_BRANCH}"; then
+              echo "Updated ${CHART} on ${TARGET_BRANCH}."
+              exit 0
+            fi
+
+            echo "Concurrent GitOps update detected; retrying (${attempt}/5)."
+            sleep $((attempt * 2))
+          done
+
+          echo "Unable to update ${TARGET_BRANCH} after 5 attempts." >&2
+          exit 1

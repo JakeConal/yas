@@ -32,6 +32,8 @@ runs:
           echo "${repository}:${GITHUB_SHA}"
           if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
             echo "${repository}:latest"
+          elif [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            echo "${repository}:${GITHUB_REF_NAME}"
           fi
           echo "EOF"
         } >> "${GITHUB_OUTPUT}"

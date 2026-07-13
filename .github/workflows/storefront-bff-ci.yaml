@@ -115,3 +115,14 @@ jobs:
           image-name: yas-storefront-bff
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           token: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  Deploy:
+    needs: Build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    permissions:
+      contents: write
+    uses: ./.github/workflows/argocd-gitops.yaml
+    with:
+      chart: storefront-bff
+      image-name: yas-storefront-bff
+    secrets: inherit
