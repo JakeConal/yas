@@ -8,117 +8,218 @@ spec:
   goTemplateOptions:
     - missingkey=error
   generators:
-    - matrix:
-        generators:
-          - list:
-              elements:
-                - env: dev
-                  namespace: dev
-                  targetRevision: env-dev
-                  host: storefront-dev.yas.local.com
-                  replicaCount: "1"
-                  productReindexJobEnabled: "true"
-                - env: staging
-                  namespace: staging
-                  targetRevision: env-staging
-                  host: storefront-staging.yas.local.com
-                  replicaCount: "1"
-                  productReindexJobEnabled: "false"
-          - list:
-              elements:
-                - service: yas-configuration
-                  path: k8s/charts/yas-configuration
-                  wave: "-10"
-                - service: cart
-                  path: k8s/charts/cart
-                  wave: "0"
-                - service: customer
-                  path: k8s/charts/customer
-                  wave: "0"
-                - service: inventory
-                  path: k8s/charts/inventory
-                  wave: "0"
-                - service: location
-                  path: k8s/charts/location
-                  wave: "0"
-                - service: media
-                  path: k8s/charts/media
-                  wave: "0"
-                - service: order
-                  path: k8s/charts/order
-                  wave: "0"
-                - service: payment
-                  path: k8s/charts/payment
-                  wave: "0"
-                - service: payment-paypal
-                  path: k8s/charts/payment-paypal
-                  wave: "0"
-                - service: product
-                  path: k8s/charts/product
-                  wave: "0"
-                - service: sampledata
-                  path: k8s/charts/sampledata
-                  wave: "5"
-                - service: search
-                  path: k8s/charts/search
-                  wave: "0"
-                - service: tax
-                  path: k8s/charts/tax
-                  wave: "0"
-                - service: backoffice-bff
-                  path: k8s/charts/backoffice-bff
-                  wave: "10"
-                - service: storefront-bff
-                  path: k8s/charts/storefront-bff
-                  wave: "10"
-                - service: backoffice-ui
-                  path: k8s/charts/backoffice-ui
-                  wave: "10"
-                - service: storefront-ui
-                  path: k8s/charts/storefront-ui
-                  wave: "10"
-                - service: swagger-ui
-                  path: k8s/charts/swagger-ui
-                  wave: "10"
+    - list:
+        elements:
+          - env: dev
+            namespace: dev
+            targetRevision: env-dev
+            storefrontHost: storefront-dev.yas.local.com
+            backofficeHost: backoffice-dev.yas.local.com
+            apiHost: api-dev.yas.local.com
+            replicaCount: "1"
+            productReindexJobEnabled: "true"
+          - env: staging
+            namespace: staging
+            targetRevision: env-staging
+            storefrontHost: storefront-staging.yas.local.com
+            backofficeHost: backoffice-staging.yas.local.com
+            apiHost: api-staging.yas.local.com
+            replicaCount: "1"
+            productReindexJobEnabled: "false"
+  syncPolicy:
+    # Keep workloads running while migrating from per-service Applications.
+    preserveResourcesOnDeletion: true
   template:
     metadata:
-      name: "{{ .env }}-{{ .service }}"
+      name: "yas-{{ .env }}"
       labels:
         app.kubernetes.io/part-of: yas
         yas/environment: "{{ .env }}"
-        yas/service: "{{ .service }}"
-      annotations:
-        argocd.argoproj.io/sync-wave: "{{ .wave }}"
     spec:
       project: yas-infrastructure
-      source:
-        repoURL: https://github.com/JakeConal/yas.git
-        targetRevision: "{{ .targetRevision }}"
-        path: "{{ .path }}"
-        helm:
-          parameters:
-            - name: backend.ingress.host
-              value: "{{ if eq .service \"backoffice-bff\" }}backoffice-{{ .env }}.yas.local.com{{ else }}{{ .host }}{{ end }}"
-            - name: ui.ingress.host
-              value: "{{ .host }}"
-            - name: replicaCount
-              value: "{{ if eq .service \"sampledata\" }}0{{ else }}{{ .replicaCount }}{{ end }}"
-            - name: backend.replicaCount
-              value: "{{ if eq .service \"sampledata\" }}0{{ else }}{{ .replicaCount }}{{ end }}"
-            - name: ui.replicaCount
-              value: "{{ if eq .service \"sampledata\" }}0{{ else }}{{ .replicaCount }}{{ end }}"
-            - name: ingress.host
-              value: "api-{{ .env }}.yas.local.com"
-            - name: reloader.reloader.enableHA
-              value: "true"
-            - name: reloader.reloader.deployment.replicas
-              value: "{{ .replicaCount }}"
-            - name: productReindexJob.enabled
-              value: "{{ .productReindexJobEnabled }}"
-            - name: mediaApplicationConfig.yas.publicUrl
-              value: "http://{{ .host }}/media"
-            - name: paymentPaypalApplicationConfig.yas.public.url
-              value: "http://{{ .host }}/complete-payment"
+      sources:
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/yas-configuration
+          helm:
+            releaseName: "{{ .env }}-yas-configuration"
+            parameters:
+              - name: reloader.reloader.enableHA
+                value: "true"
+              - name: reloader.reloader.deployment.replicas
+                value: "{{ .replicaCount }}"
+              - name: mediaApplicationConfig.yas.publicUrl
+                value: "http://{{ .storefrontHost }}/media"
+              - name: paymentPaypalApplicationConfig.yas.public.url
+                value: "http://{{ .storefrontHost }}/complete-payment"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/cart
+          helm:
+            releaseName: "{{ .env }}-cart"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/customer
+          helm:
+            releaseName: "{{ .env }}-customer"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/inventory
+          helm:
+            releaseName: "{{ .env }}-inventory"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/location
+          helm:
+            releaseName: "{{ .env }}-location"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/media
+          helm:
+            releaseName: "{{ .env }}-media"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+              - name: backend.ingress.host
+                value: "{{ .storefrontHost }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/order
+          helm:
+            releaseName: "{{ .env }}-order"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/payment
+          helm:
+            releaseName: "{{ .env }}-payment"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/payment-paypal
+          helm:
+            releaseName: "{{ .env }}-payment-paypal"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/product
+          helm:
+            releaseName: "{{ .env }}-product"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/sampledata
+          helm:
+            releaseName: "{{ .env }}-sampledata"
+            parameters:
+              - name: backend.replicaCount
+                value: "0"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/search
+          helm:
+            releaseName: "{{ .env }}-search"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+              - name: productReindexJob.enabled
+                value: "{{ .productReindexJobEnabled }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/tax
+          helm:
+            releaseName: "{{ .env }}-tax"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/backoffice-bff
+          helm:
+            releaseName: "{{ .env }}-backoffice-bff"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+              - name: backend.ingress.host
+                value: "{{ .backofficeHost }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/storefront-bff
+          helm:
+            releaseName: "{{ .env }}-storefront-bff"
+            parameters:
+              - name: backend.replicaCount
+                value: "{{ .replicaCount }}"
+              - name: backend.ingress.host
+                value: "{{ .storefrontHost }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/backoffice-ui
+          helm:
+            releaseName: "{{ .env }}-backoffice-ui"
+            parameters:
+              - name: ui.replicaCount
+                value: "{{ .replicaCount }}"
+              - name: ui.ingress.host
+                value: "{{ .backofficeHost }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/storefront-ui
+          helm:
+            releaseName: "{{ .env }}-storefront-ui"
+            parameters:
+              - name: ui.replicaCount
+                value: "{{ .replicaCount }}"
+              - name: ui.ingress.host
+                value: "{{ .storefrontHost }}"
+
+        - repoURL: https://github.com/JakeConal/yas.git
+          targetRevision: "{{ .targetRevision }}"
+          path: k8s/charts/swagger-ui
+          helm:
+            releaseName: "{{ .env }}-swagger-ui"
+            parameters:
+              - name: replicaCount
+                value: "{{ .replicaCount }}"
+              - name: ingress.host
+                value: "{{ .apiHost }}"
+
       destination:
         server: https://kubernetes.default.svc
         namespace: "{{ .namespace }}"
