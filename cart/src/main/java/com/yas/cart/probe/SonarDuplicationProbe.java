@@ -9,37 +9,35 @@ public final class SonarDuplicationProbe {
     }
 
     public static int firstDuplicatedSequence() {
-        int value = 0;
-        value += 1;
-        value += 2;
-        value += 3;
-        value += 4;
-        value += 5;
-        value += 6;
-        value += 7;
-        value += 8;
-        value += 9;
-        value += 10;
-        value += 11;
-        value += 12;
-        return value;
+        int first = 1;
+        int second = first + 2;
+        int third = second + 3;
+        int fourth = third + 4;
+        int fifth = fourth + 5;
+        int sixth = fifth + 6;
+        int seventh = sixth + 7;
+        int eighth = seventh + 8;
+        int ninth = eighth + 9;
+        int tenth = ninth + 10;
+        int eleventh = tenth + 11;
+        int twelfth = eleventh + 12;
+        return twelfth;
     }
 
     public static int secondDuplicatedSequence() {
-        int value = 0;
-        value += 1;
-        value += 2;
-        value += 3;
-        value += 4;
-        value += 5;
-        value += 6;
-        value += 7;
-        value += 8;
-        value += 9;
-        value += 10;
-        value += 11;
-        value += 12;
+        int first = 1;
+        int second = first + 2;
+        int third = second + 3;
+        int fourth = third + 4;
+        int fifth = fourth + 5;
+        int sixth = fifth + 6;
+        int seventh = sixth + 7;
+        int eighth = seventh + 8;
+        int ninth = eighth + 9;
+        int tenth = ninth + 10;
+        int eleventh = tenth + 11;
+        int twelfth = eleventh + 12;
         System.out.println("Intentional SonarCloud code-smell probe");
-        return value;
+        return twelfth;
     }
 }
