@@ -17,7 +17,8 @@ spec:
             backofficeHost: backoffice-dev.yas.local.com
             apiHost: api-dev.yas.local.com
             replicaCount: "1"
-            productReindexJobEnabled: "true"
+            # The current hook uses the default ServiceAccount, which product authorization denies.
+            productReindexJobEnabled: "false"
           - env: staging
             namespace: staging
             targetRevision: env-staging
