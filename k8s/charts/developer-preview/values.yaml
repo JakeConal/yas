@@ -1,0 +1,24 @@
+preview:
+  owner: ""
+  id: ""
+
+resourceQuota:
+  pods: "8"
+  requestsCpu: "2"
+  requestsMemory: 4Gi
+  limitsCpu: "4"
+  limitsMemory: 6Gi
+
+limitRange:
+  defaultRequest:
+    cpu: 50m
+    memory: 128Mi
+  default:
+    cpu: 500m
+    memory: 512Mi
+
+networkPolicy:
+  enabled: true
+  ingressNamespaces:
+    - ingress-nginx
+    - observability
