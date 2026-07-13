@@ -71,6 +71,17 @@ entries:
     urls:
     - https://github.com/JakeConal/yas/releases/download/customer-0.1.0/customer-0.1.0.tgz
     version: 0.1.0
+  developer-preview:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2026-07-13T09:50:00.882797168Z"
+    description: Namespace-scoped guardrails for an isolated developer preview
+    digest: f5c0bdf8c4b4775c526b995a3a414280546c1c79426f3a060b82ed08ad3f9aa1
+    name: developer-preview
+    type: application
+    urls:
+    - https://github.com/JakeConal/yas/releases/download/developer-preview-0.1.0/developer-preview-0.1.0.tgz
+    version: 0.1.0
   inventory:
   - apiVersion: v2
     appVersion: latest
@@ -348,4 +359,4 @@ entries:
     urls:
     - https://github.com/JakeConal/yas/releases/download/yas-configuration-0.4.0/yas-configuration-0.4.0.tgz
     version: 0.4.0
-generated: "2026-07-11T09:43:28.823568497Z"
+generated: "2026-07-13T09:50:04.143631057Z"
