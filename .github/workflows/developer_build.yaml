@@ -156,6 +156,8 @@ jobs:
             )
           else
             mvn clean test -pl "$SOURCE_DIR" -am
+            # Backend Dockerfiles copy the packaged Spring Boot JAR from target/.
+            mvn package -DskipTests -pl "$SOURCE_DIR" -am
           fi
 
       - name: Log in to Docker Hub
