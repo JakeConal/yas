@@ -125,4 +125,5 @@ jobs:
     with:
       chart: webhook
       image-name: yas-webhook
+      source-path: webhook
     secrets: inherit

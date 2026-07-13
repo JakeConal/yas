@@ -126,4 +126,5 @@ jobs:
     with:
       chart: backoffice-bff
       image-name: yas-backoffice-bff
+      source-path: backoffice-bff
     secrets: inherit

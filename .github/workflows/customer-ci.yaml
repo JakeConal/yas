@@ -125,4 +125,5 @@ jobs:
     with:
       chart: customer
       image-name: yas-customer
+      source-path: customer
     secrets: inherit

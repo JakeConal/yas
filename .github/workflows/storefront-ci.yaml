@@ -94,4 +94,5 @@ jobs:
     with:
       chart: storefront-ui
       image-name: yas-storefront
+      source-path: storefront
     secrets: inherit

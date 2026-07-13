@@ -125,4 +125,5 @@ jobs:
     with:
       chart: sampledata
       image-name: yas-sampledata
+      source-path: sampledata
     secrets: inherit

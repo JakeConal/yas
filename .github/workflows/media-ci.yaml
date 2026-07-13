@@ -125,4 +125,5 @@ jobs:
     with:
       chart: media
       image-name: yas-media
+      source-path: media
     secrets: inherit

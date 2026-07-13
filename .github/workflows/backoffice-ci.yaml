@@ -110,4 +110,5 @@ jobs:
     with:
       chart: backoffice-ui
       image-name: yas-backoffice
+      source-path: backoffice
     secrets: inherit

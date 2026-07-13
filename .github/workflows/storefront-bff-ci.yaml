@@ -125,4 +125,5 @@ jobs:
     with:
       chart: storefront-bff
       image-name: yas-storefront-bff
+      source-path: storefront-bff
     secrets: inherit

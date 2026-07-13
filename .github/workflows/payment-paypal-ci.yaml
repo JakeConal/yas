@@ -125,4 +125,5 @@ jobs:
     with:
       chart: payment-paypal
       image-name: yas-payment-paypal
+      source-path: payment-paypal
     secrets: inherit

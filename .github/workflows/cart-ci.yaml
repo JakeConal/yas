@@ -125,4 +125,5 @@ jobs:
     with:
       chart: cart
       image-name: yas-cart
+      source-path: cart
     secrets: inherit

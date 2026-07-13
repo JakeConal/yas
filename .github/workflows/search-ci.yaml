@@ -125,4 +125,5 @@ jobs:
     with:
       chart: search
       image-name: yas-search
+      source-path: search
     secrets: inherit

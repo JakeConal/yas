@@ -125,4 +125,5 @@ jobs:
     with:
       chart: tax
       image-name: yas-tax
+      source-path: tax
     secrets: inherit

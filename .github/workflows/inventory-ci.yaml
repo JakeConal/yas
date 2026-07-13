@@ -125,4 +125,5 @@ jobs:
     with:
       chart: inventory
       image-name: yas-inventory
+      source-path: inventory
     secrets: inherit

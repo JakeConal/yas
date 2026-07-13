@@ -125,4 +125,5 @@ jobs:
     with:
       chart: order
       image-name: yas-order
+      source-path: order
     secrets: inherit

@@ -11,6 +11,10 @@ on:
         description: Docker Hub image name without the namespace
         required: true
         type: string
+      source-path:
+        description: Top-level source directory used to guard dev deployments
+        required: true
+        type: string
     secrets:
       DOCKERHUB_USERNAME:
         required: true
@@ -29,19 +33,31 @@ jobs:
 
       - name: Select deployment environment
         shell: bash
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          SOURCE_PATH: ${{ inputs.source-path }}
         run: |
           if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
             echo "TARGET_BRANCH=env-dev" >> "${GITHUB_ENV}"
             echo "IMAGE_TAG=${GITHUB_SHA}" >> "${GITHUB_ENV}"
+            if [[ -n "${BEFORE_SHA}" && "${BEFORE_SHA}" != "0000000000000000000000000000000000000000" ]] &&
+               git diff --quiet "${BEFORE_SHA}" "${GITHUB_SHA}" -- "${SOURCE_PATH}" pom.xml; then
+              echo "DEPLOY_ENABLED=false" >> "${GITHUB_ENV}"
+              echo "No source change for ${SOURCE_PATH}; skipping dev deployment."
+            else
+              echo "DEPLOY_ENABLED=true" >> "${GITHUB_ENV}"
+            fi
           elif [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             echo "TARGET_BRANCH=env-staging" >> "${GITHUB_ENV}"
             echo "IMAGE_TAG=${GITHUB_REF_NAME}" >> "${GITHUB_ENV}"
+            echo "DEPLOY_ENABLED=true" >> "${GITHUB_ENV}"
           else
             echo "Unsupported deployment ref: ${GITHUB_REF}" >&2
             exit 1
           fi
 
       - name: Update service chart after successful image publish
+        if: env.DEPLOY_ENABLED == 'true'
         shell: bash
         env:
           CHART: ${{ inputs.chart }}

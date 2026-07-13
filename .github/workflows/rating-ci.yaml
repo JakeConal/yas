@@ -125,4 +125,5 @@ jobs:
     with:
       chart: rating
       image-name: yas-rating
+      source-path: rating
     secrets: inherit

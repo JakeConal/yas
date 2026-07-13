@@ -125,4 +125,5 @@ jobs:
     with:
       chart: location
       image-name: yas-location
+      source-path: location
     secrets: inherit

@@ -125,4 +125,5 @@ jobs:
     with:
       chart: product
       image-name: yas-product
+      source-path: product
     secrets: inherit

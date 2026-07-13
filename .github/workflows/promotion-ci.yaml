@@ -125,4 +125,5 @@ jobs:
     with:
       chart: promotion
       image-name: yas-promotion
+      source-path: promotion
     secrets: inherit

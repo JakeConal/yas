@@ -125,4 +125,5 @@ jobs:
     with:
       chart: recommendation
       image-name: yas-recommendation
+      source-path: recommendation
     secrets: inherit

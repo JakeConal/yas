@@ -125,4 +125,5 @@ jobs:
     with:
       chart: payment
       image-name: yas-payment
+      source-path: payment
     secrets: inherit
