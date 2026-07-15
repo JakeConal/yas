@@ -22,6 +22,7 @@ public class SampleDataService {
     }
 
     public SampleDataVm createSampleData() {
+        // Keep sample data seeding in one place so CI exercises the module wiring.
         SqlScriptExecutor executor = new SqlScriptExecutor();
         executor.executeScriptsForSchema(productDataSource, "public", "classpath*:db/product/*.sql");
         executor.executeScriptsForSchema(mediaDataSource, "public", "classpath*:db/media/*.sql");
