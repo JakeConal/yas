@@ -17,6 +17,7 @@ spec:
         {{- include "search.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: product-reindex
     spec:
+      serviceAccountName: search
       restartPolicy: Never
       containers:
         - name: reindex

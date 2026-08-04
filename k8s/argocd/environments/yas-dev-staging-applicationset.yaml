@@ -17,8 +17,7 @@ spec:
             backofficeHost: backoffice-dev.yas.local.com
             apiHost: api-dev.yas.local.com
             replicaCount: "1"
-            # The current hook uses the default ServiceAccount, which product authorization denies.
-            productReindexJobEnabled: "false"
+            productReindexJobEnabled: "true"
           - env: staging
             namespace: staging
             targetRevision: env-staging
@@ -26,7 +25,7 @@ spec:
             backofficeHost: backoffice-staging.yas.local.com
             apiHost: api-staging.yas.local.com
             replicaCount: "1"
-            productReindexJobEnabled: "false"
+            productReindexJobEnabled: "true"
   syncPolicy:
     # Keep workloads running while migrating from per-service Applications.
     preserveResourcesOnDeletion: true
@@ -171,7 +170,7 @@ spec:
             releaseName: "{{ .env }}-sampledata"
             parameters:
               - name: backend.replicaCount
-                value: "0"
+                value: "{{ .replicaCount }}"
 
         - repoURL: https://github.com/JakeConal/yas.git
           targetRevision: "{{ .targetRevision }}"

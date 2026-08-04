@@ -352,6 +352,7 @@ spec:
               - cluster.local/ns/dev/sa/backoffice-bff
               - cluster.local/ns/dev/sa/order
               - cluster.local/ns/dev/sa/sampledata
+              - cluster.local/ns/dev/sa/search
       to:
         - operation:
             ports:
