@@ -36,6 +36,8 @@ spec:
                   key: ELASTICSEARCH_PASSWORD
             - name: PRODUCT_URL
               value: http://product/product/storefront/products-es
+            - name: PRODUCT_LIST_URL
+              value: http://product/product/storefront/products?pageNo=0&pageSize=1000
             - name: ELASTICSEARCH_URL
               value: http://elasticsearch-es-http.elasticsearch:9200
           command:
@@ -43,7 +45,7 @@ spec:
             - -ec
             - |
               for i in $(seq 1 60); do
-                if curl -fsS "$PRODUCT_URL/1" >/dev/null &&
+                if curl -fsS "$PRODUCT_LIST_URL" >/dev/null &&
                    curl -fsS -u "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD" "$ELASTICSEARCH_URL" >/dev/null; then
                   break
                 fi
@@ -56,6 +58,11 @@ spec:
 
               curl -fsS -u "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD" \
                 -H "Content-Type: application/json" \
+                -X PUT "$ELASTICSEARCH_URL/product" \
+                --data '{"settings":{"number_of_replicas":0}}' >/dev/null || true
+
+              curl -fsS -u "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD" \
+                -H "Content-Type: application/json" \
                 -X POST "$ELASTICSEARCH_URL/product/_delete_by_query?conflicts=proceed&refresh=true" \
                 --data '{"query":{"match_all":{}}}' >/dev/null || true
 
@@ -65,7 +72,10 @@ spec:
                 --data '{"index":{"number_of_replicas":0}}' >/dev/null || true
 
               indexed=0
-              for id in $(seq 1 200); do
+              product_ids="$(curl -fsS "$PRODUCT_LIST_URL" \
+                | sed 's/"id":/\n/g' \
+                | sed -n 's/^\([0-9][0-9]*\).*/\1/p')"
+              for id in $product_ids; do
                 if body="$(curl -fsS "$PRODUCT_URL/$id" 2>/dev/null)"; then
                   echo "$body" | curl -fsS -u "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD" \
                     -H "Content-Type: application/json" \
