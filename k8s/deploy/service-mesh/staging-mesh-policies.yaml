@@ -352,6 +352,7 @@ spec:
               - cluster.local/ns/staging/sa/backoffice-bff
               - cluster.local/ns/staging/sa/order
               - cluster.local/ns/staging/sa/sampledata
+              - cluster.local/ns/staging/sa/search
       to:
         - operation:
             ports:
