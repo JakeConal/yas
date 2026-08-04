@@ -1,7 +1,7 @@
 ui:
   image:
     repository: jakecoop17/yas-storefront
-    tag: c34539a1312f581034096082b35e6c689eef56de
+    tag: 19768c15bd8a3df3a26defbc93299773c2b3b86c
   nameOverride: storefront-ui
   fullnameOverride: storefront-ui
 #  extraVolumes:
