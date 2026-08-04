@@ -57,19 +57,52 @@ spec:
               done
 
               curl -fsS -u "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD" \
+                -X DELETE "$ELASTICSEARCH_URL/product" >/dev/null || true
+
+              curl -fsS -u "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD" \
                 -H "Content-Type: application/json" \
                 -X PUT "$ELASTICSEARCH_URL/product" \
-                --data '{"settings":{"number_of_replicas":0}}' >/dev/null || true
-
-              curl -fsS -u "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD" \
-                -H "Content-Type: application/json" \
-                -X POST "$ELASTICSEARCH_URL/product/_delete_by_query?conflicts=proceed&refresh=true" \
-                --data '{"query":{"match_all":{}}}' >/dev/null || true
-
-              curl -fsS -u "$ELASTICSEARCH_USERNAME:$ELASTICSEARCH_PASSWORD" \
-                -H "Content-Type: application/json" \
-                -X PUT "$ELASTICSEARCH_URL/product/_settings" \
-                --data '{"index":{"number_of_replicas":0}}' >/dev/null || true
+                --data '{
+                  "settings": {
+                    "number_of_replicas": 0,
+                    "analysis": {
+                      "filter": {
+                        "autocomplete_filter": {
+                          "type": "edge_ngram", "min_gram": 1, "max_gram": 50
+                        }
+                      },
+                      "analyzer": {
+                        "autocomplete_search": {
+                          "type": "custom", "tokenizer": "standard", "filter": ["lowercase"]
+                        },
+                        "autocomplete_index": {
+                          "type": "custom", "tokenizer": "standard",
+                          "filter": ["lowercase", "autocomplete_filter"]
+                        }
+                      }
+                    }
+                  },
+                  "mappings": {
+                    "properties": {
+                      "id": {"type": "long"},
+                      "name": {
+                        "type": "text", "analyzer": "autocomplete_index",
+                        "search_analyzer": "autocomplete_search"
+                      },
+                      "slug": {"type": "keyword"},
+                      "price": {"type": "double"},
+                      "isPublished": {"type": "boolean"},
+                      "isVisibleIndividually": {"type": "boolean"},
+                      "isAllowedToOrder": {"type": "boolean"},
+                      "isFeatured": {"type": "boolean"},
+                      "thumbnailMediaId": {"type": "long"},
+                      "brand": {"type": "text", "fielddata": true},
+                      "categories": {"type": "keyword"},
+                      "attributes": {"type": "keyword"},
+                      "createdOn": {"type": "date"}
+                    }
+                  }
+                }' >/dev/null
 
               indexed=0
               product_ids="$(curl -fsS "$PRODUCT_LIST_URL" \
