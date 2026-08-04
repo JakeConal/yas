@@ -12,7 +12,7 @@ spec:
         elements:
           - env: dev
             namespace: dev
-            targetRevision: main
+            targetRevision: env-dev
             storefrontHost: storefront-dev.yas.local.com
             backofficeHost: backoffice-dev.yas.local.com
             apiHost: api-dev.yas.local.com
@@ -21,7 +21,7 @@ spec:
             productReindexJobEnabled: "false"
           - env: staging
             namespace: staging
-            targetRevision: main
+            targetRevision: env-staging
             storefrontHost: storefront-staging.yas.local.com
             backofficeHost: backoffice-staging.yas.local.com
             apiHost: api-staging.yas.local.com
