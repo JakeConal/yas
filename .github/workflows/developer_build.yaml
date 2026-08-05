@@ -51,6 +51,7 @@ on:
           - service
           - storefront
           - backoffice
+          - all
 
 permissions:
   contents: read
@@ -146,9 +147,21 @@ jobs:
         env:
           SOURCE_DIR: ${{ steps.preview.outputs.source_dir }}
           COMPONENT: ${{ steps.preview.outputs.component }}
+          PROFILE: ${{ inputs.profile }}
         run: |
           set -euo pipefail
-          if [ "$COMPONENT" = "ui" ]; then
+          if [ "$PROFILE" = "all" ]; then
+            mvn clean test
+            mvn package -DskipTests
+
+            for ui_service in storefront backoffice; do
+              (
+                cd "$ui_service"
+                npm ci
+                npm test
+              )
+            done
+          elif [ "$COMPONENT" = "ui" ]; then
             (
               cd "$SOURCE_DIR"
               npm ci
@@ -172,6 +185,33 @@ jobs:
           context: ./${{ steps.preview.outputs.source_dir }}
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ steps.preview.outputs.image_name }}:${{ steps.preview.outputs.image_tag }}
+
+      - name: Build and push all immutable preview images
+        if: ${{ inputs.profile == 'all' }}
+        shell: bash
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          IMAGE_TAG: ${{ steps.preview.outputs.image_tag }}
+        run: |
+          set -euo pipefail
+
+          backend_services=(
+            cart customer inventory location media order payment payment-paypal
+            product promotion rating recommendation sampledata search tax webhook
+          )
+          bff_services=(storefront-bff backoffice-bff)
+          ui_services=(storefront backoffice)
+
+          build_and_push() {
+            local service="$1"
+            local image="${DOCKERHUB_USERNAME}/yas-${service}:${IMAGE_TAG}"
+            docker build --tag "$image" "$service"
+            docker push "$image"
+          }
+
+          for service in "${backend_services[@]}" "${bff_services[@]}" "${ui_services[@]}"; do
+            build_and_push "$service"
+          done
 
       - name: Authenticate to Google Cloud with Workload Identity Federation
         uses: google-github-actions/auth@v2
@@ -230,14 +270,23 @@ jobs:
           TARGET_COMPONENT: ${{ steps.preview.outputs.component }}
           TARGET_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/${{ steps.preview.outputs.image_name }}
           TARGET_TAG: ${{ steps.preview.outputs.image_tag }}
+          IMAGE_REGISTRY: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
           set -euo pipefail
+
+          backend_charts=(
+            cart customer inventory location media order payment payment-paypal
+            product promotion rating recommendation sampledata search tax webhook
+          )
+          bff_charts=(storefront-bff backoffice-bff)
+          ui_charts=(storefront-ui backoffice-ui)
 
           charts=("$TARGET_CHART")
           case "$PROFILE" in
             service) ;;
             storefront) charts+=(storefront-bff storefront-ui) ;;
             backoffice) charts+=(backoffice-bff backoffice-ui) ;;
+            all) charts=("${backend_charts[@]}" "${bff_charts[@]}" "${ui_charts[@]}") ;;
             *) echo "Unsupported profile: $PROFILE"; exit 1 ;;
           esac
 
@@ -255,7 +304,20 @@ jobs:
               --set-string ui.resources.limits.memory=256Mi
             )
 
-            if [ "$chart" = "$TARGET_CHART" ]; then
+            if [ "$PROFILE" = "all" ]; then
+              if [[ "$chart" == *-ui ]]; then
+                local ui_image_name="${chart%-ui}"
+                parameters+=(
+                  --set ui.image.repository="${IMAGE_REGISTRY}/yas-${ui_image_name}"
+                  --set-string ui.image.tag="$TARGET_TAG"
+                )
+              else
+                parameters+=(
+                  --set backend.image.repository="${IMAGE_REGISTRY}/yas-${chart}"
+                  --set-string backend.image.tag="$TARGET_TAG"
+                )
+              fi
+            elif [ "$chart" = "$TARGET_CHART" ]; then
               if [ "$TARGET_COMPONENT" = "ui" ]; then
                 parameters+=(--set ui.image.repository="$TARGET_IMAGE" --set-string ui.image.tag="$TARGET_TAG")
               else
@@ -275,6 +337,10 @@ jobs:
               parameters+=(--set backend.ingress.enabled=true --set-string backend.ingress.host="$HOST")
             fi
             if [ "$PROFILE" = "backoffice" ] && [ "$chart" = "backoffice-bff" ]; then
+              parameters+=(--set backend.ingress.enabled=true --set-string backend.ingress.host="$HOST")
+            fi
+            if [ "$PROFILE" = "all" ] && \
+              { [ "$chart" = "storefront-bff" ] || [ "$chart" = "backoffice-bff" ]; }; then
               parameters+=(--set backend.ingress.enabled=true --set-string backend.ingress.host="$HOST")
             fi
 
