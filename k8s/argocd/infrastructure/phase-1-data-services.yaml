@@ -124,6 +124,8 @@ spec:
       valuesObject:
         auth:
           password: redis
+        replica:
+          replicaCount: 1
   destination:
     server: https://kubernetes.default.svc
     namespace: redis
