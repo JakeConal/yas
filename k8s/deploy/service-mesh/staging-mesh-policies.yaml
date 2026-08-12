@@ -1,8 +1,8 @@
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-strict-mtls
-  namespace: dev
+  name: staging-strict-mtls
+  namespace: staging
 spec:
   mtls:
     mode: STRICT
@@ -10,8 +10,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-cart-metrics-plaintext
-  namespace: dev
+  name: staging-cart-metrics-plaintext
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -25,8 +25,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-customer-metrics-plaintext
-  namespace: dev
+  name: staging-customer-metrics-plaintext
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -40,8 +40,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-inventory-metrics-plaintext
-  namespace: dev
+  name: staging-inventory-metrics-plaintext
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -55,8 +55,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-location-metrics-plaintext
-  namespace: dev
+  name: staging-location-metrics-plaintext
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -70,8 +70,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-media-metrics-plaintext
-  namespace: dev
+  name: staging-media-metrics-plaintext
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -85,8 +85,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-order-metrics-plaintext
-  namespace: dev
+  name: staging-order-metrics-plaintext
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -100,8 +100,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-payment-metrics-plaintext
-  namespace: dev
+  name: staging-payment-metrics-plaintext
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -115,8 +115,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-product-metrics-plaintext
-  namespace: dev
+  name: staging-product-metrics-plaintext
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -130,8 +130,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-sampledata-metrics-plaintext
-  namespace: dev
+  name: staging-sampledata-metrics-plaintext
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -145,8 +145,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-search-metrics-plaintext
-  namespace: dev
+  name: staging-search-metrics-plaintext
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -160,8 +160,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-tax-metrics-plaintext
-  namespace: dev
+  name: staging-tax-metrics-plaintext
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -175,8 +175,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-storefront-bff-ingress-permissive
-  namespace: dev
+  name: staging-storefront-bff-ingress-permissive
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -187,8 +187,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-backoffice-bff-ingress-permissive
-  namespace: dev
+  name: staging-backoffice-bff-ingress-permissive
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -199,8 +199,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-media-ingress-permissive
-  namespace: dev
+  name: staging-media-ingress-permissive
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -211,8 +211,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-swagger-ui-ingress-permissive
-  namespace: dev
+  name: staging-swagger-ui-ingress-permissive
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -223,10 +223,10 @@ spec:
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: dev-default-istio-mutual
-  namespace: dev
+  name: staging-default-istio-mutual
+  namespace: staging
 spec:
-  host: "*.dev.svc.cluster.local"
+  host: "*.staging.svc.cluster.local"
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
@@ -234,12 +234,12 @@ spec:
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: dev-default-istio-mutual-global
+  name: staging-default-istio-mutual-global
   namespace: istio-system
 spec:
   exportTo:
     - "*"
-  host: "*.dev.svc.cluster.local"
+  host: "*.staging.svc.cluster.local"
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
@@ -247,17 +247,17 @@ spec:
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: search-retry-policy
-  namespace: dev
+  name: staging-search-retry-policy
+  namespace: staging
 spec:
   hosts:
-    - search.dev.svc.cluster.local
+    - search.staging.svc.cluster.local
   http:
     - match:
         - port: 80
       route:
         - destination:
-            host: search.dev.svc.cluster.local
+            host: search.staging.svc.cluster.local
             port:
               number: 80
       retries:
@@ -269,8 +269,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: product-allow-metrics-scrape
-  namespace: dev
+  name: staging-product-allow-metrics-scrape
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -285,8 +285,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: search-allow-metrics-scrape
-  namespace: dev
+  name: staging-search-allow-metrics-scrape
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -301,8 +301,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: search-allow-product-and-storefront-bff
-  namespace: dev
+  name: staging-search-allow-product-and-storefront-bff
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -319,8 +319,8 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/product
-              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/staging/sa/product
+              - cluster.local/ns/staging/sa/storefront-bff
       to:
         - operation:
             ports:
@@ -330,8 +330,8 @@ spec:
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: product-allow-storefront-bff
-  namespace: dev
+  name: staging-product-allow-storefront-bff
+  namespace: staging
 spec:
   selector:
     matchLabels:
@@ -348,11 +348,11 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/storefront-bff
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/order
-              - cluster.local/ns/dev/sa/sampledata
-              - cluster.local/ns/dev/sa/search
+              - cluster.local/ns/staging/sa/storefront-bff
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/order
+              - cluster.local/ns/staging/sa/sampledata
+              - cluster.local/ns/staging/sa/search
       to:
         - operation:
             ports:
