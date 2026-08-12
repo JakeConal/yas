@@ -94,7 +94,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: JAVA_TOOL_OPTIONS
-              value: "-javaagent:{{ .Values.opentelemetry.javaAgentPath }}"
+              value: "{{ .Values.javaToolOptions }} -javaagent:{{ .Values.opentelemetry.javaAgentPath }}"
             - name: OTEL_SERVICE_NAME
               value: {{ include "backend.fullname" . | quote }}
             - name: OTEL_RESOURCE_ATTRIBUTES
@@ -109,6 +109,9 @@ spec:
               value: {{ .Values.opentelemetry.metricsExporter | quote }}
             - name: OTEL_LOGS_EXPORTER
               value: {{ .Values.opentelemetry.logsExporter | quote }}
+            {{- else }}
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.javaToolOptions | quote }}
             {{- end }}
             - name: LOGGING_CONFIG
               value: {{ .Values.logbackXmlPath }}
