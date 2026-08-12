@@ -15,6 +15,7 @@ spec:
       - id: 0
         type: persistent-claim
         size: 100Gi
+        class: {{ .Values.kafka.storageClass }}
         deleteClaim: false
 ---
 apiVersion: kafka.strimzi.io/v1beta2
